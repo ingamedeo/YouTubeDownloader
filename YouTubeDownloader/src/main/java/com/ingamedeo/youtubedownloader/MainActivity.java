@@ -51,6 +51,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+//Version: 0.5b
+
 public class MainActivity extends ActionBarActivity {
 
     String encoding = "UTF-8";
