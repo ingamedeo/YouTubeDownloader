@@ -1,22 +1,18 @@
 package com.ingamedeo.youtubedownloader;
 
 import android.app.AlertDialog;
-import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
 import android.os.StrictMode;
 import android.support.v7.app.ActionBarActivity;
-import android.os.Bundle;
 import android.text.ClipboardManager;
-import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -36,14 +32,10 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,16 +46,9 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 public class MainActivity extends ActionBarActivity {
@@ -84,7 +69,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //AlertDialog!
+        //Create a disclaimer.
         final AlertDialog alertDialog = new AlertDialog.Builder(context).create();
         alertDialog.setTitle("WARNING! Disclaimer");
         alertDialog.setMessage("WARNING: Downloading video from YouTube is illegal. I assume no responsibility for violation of laws pertaining to media downloading, and makes this good faith effort to inform you of your responsibilities in this regard. If you break the law, you’re on your own. Thanks");
@@ -97,11 +82,12 @@ public class MainActivity extends ActionBarActivity {
         alertDialog.setIcon(R.drawable.ic_launcher);
         alertDialog.show();
 
+        //Call handleSendText.
         Intent intent = getIntent();
         handleSendText(intent);
     }
 
-    void handleSendText(Intent intent) {
+    void handleSendText(Intent intent) { //Gets share data from YouTube app.
         String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
         String url;
         String videocode;
@@ -109,44 +95,44 @@ public class MainActivity extends ActionBarActivity {
         if (sharedText != null) {
             // Update UI to reflect text being shared
 
-            //Find Video URL
+            //Get Video URL - Removes last part ;)
             url = sharedText.replaceAll("&feature=youtube_gdata_player","");
 
-            //Find video code
+            //Get video code
             videocode = url.substring(url.lastIndexOf("=") + 1);
 
-            videoid = videocode; //Maybe this can be improved
+            videoid = videocode; //Maybe this can be removed
 
-            //testo.setText(url + " " + videocode);
-            readWebpage(videocode);
+            readWebpage(videocode); //Calls readWebpage - Parses http://www.youtube.com/get_video_info?video_id= and downloads video info ;)
 
-            //////////////////////////
-               //Get StatusUrl ;))
-            //////////////////////////
+            /*
+                          Code Below uses vidtomp3 remote api to convert video to MP3!
+                                          MP3 Download function ;)
+             */
             ArrayList<NameValuePair> postParameters = new ArrayList<NameValuePair>();
-            postParameters.add(new BasicNameValuePair("mediaurl", url));
+            postParameters.add(new BasicNameValuePair("mediaurl", url)); //Post Request mediaurl as parameter ;)
 
             String response = null;
 
             returnString = null;
 
-            // call executeHttpPost method passing necessary parameters
+            //execute request and get response ;)
             try {
                 response = CustomHttpClient.executeHttpPost(
                         "http://www.vidtomp3.com/cc/conversioncloud.php",  // vidtomp3 remove server api
                         postParameters);
 
-                // store the result returned by PHP script that runs MySQL query
-                String result = response.toString();
-                returnString = result.substring(result.indexOf("statusurl")+12, result.length()-4); //Returns the url
+                String result = response.toString(); //This should be removed. To need to convert to string.
+                returnString = result.substring(result.indexOf("statusurl")+12, result.length()-4); //Returns the statusurl (It's a sort of JSON...but not parsing right way)
                 returnString = returnString.replace("\\", ""); //This removes backslashes from the url ;))
+                Log.i("log_tag", returnString); //Logs statusurl returned by the api
 
             }
             catch (Exception e) {
-                    Log.e("log_tag","Error in http connection!!" + e.toString());
+                    Log.e("log_tag","Error while connecting to vidtomp3 api! " + e.toString());
             }
 
-            try {
+            try { //Connects to statusurl..should get an XML document..anyway..I'm not parsing it ;)
                 DefaultHttpClient httpClient = new DefaultHttpClient();
                 HttpGet httpGet = new HttpGet(returnString);
 
@@ -154,8 +140,8 @@ public class MainActivity extends ActionBarActivity {
                 HttpEntity httpEntity = httpResponse.getEntity();
                 String output = EntityUtils.toString(httpEntity);
 
-                mp3url = output.substring(output.indexOf("<downloadurl><![CDATA[")+22, output.indexOf("/]]></downloadurl>"));
-                //System.out.println(output); DEBUG - REMOVED 04 01 2014 00:54 This should return mp3 download url ;)
+                mp3url = output.substring(output.indexOf("<downloadurl><![CDATA[")+22, output.indexOf("/]]></downloadurl>")); //Extract mp3 download URL from XML file
+                Log.i("log_tag",mp3url); //This should return mp3 download url ;)
 
             } catch (ClientProtocolException e) {
                 e.printStackTrace();
@@ -190,7 +176,7 @@ public class MainActivity extends ActionBarActivity {
                     HttpResponse execute = client.execute(httpGet);
                     InputStream content = execute.getEntity().getContent(); //instream - Can be used only once!
 
-                    //Get page HTML...
+                    //Get page HTML... (video info stuff)
                     ByteArrayOutputStream content_2 = new ByteArrayOutputStream();
 
                     // Read response into a buffered stream
@@ -200,9 +186,8 @@ public class MainActivity extends ActionBarActivity {
                         content_2.write(sBuffer, 0, readBytes);
                     }
 
-                    // Return result from buffered stream
+                    // Return result from buffered stream - This is HTML video info page
                     dataAsString = new String(content_2.toByteArray());
-                    //System.out.println(dataAsString);
 
                     //      Get Page HTML
                     ////////////////////////////////////
@@ -219,7 +204,7 @@ public class MainActivity extends ActionBarActivity {
                         String val = pair.getValue();
                         //System.out.println(key + " " + val);
 
-                        if (key.equals("title")) {
+                        if (key.equals("title")) { //Parses page and get video title ;)
                             title = val;
                             //System.out.println(title); DEBUG Deleted on 02 01 2014
                         }
@@ -237,14 +222,17 @@ public class MainActivity extends ActionBarActivity {
                 }
             }
 
-            ///////////////////////////////
+            /*
+              Well...there is a problem..we have to find a way to extract video download URL from YouTube video info page.
+              So I call a PHP script hosted on my domain, that returns back video download URL ;)
+              Let's see...
+             */
             HttpClient httpclient = new DefaultHttpClient();
-            HttpPost httppost = new HttpPost("http://ingamedeo.altervista.org/ff.php");
+            HttpPost httppost = new HttpPost("http://ingamedeo.altervista.org/ff.php"); //PHP Script - Download URL
 
-            //System.out.println(content);
             // Request parameters and other properties.
             List<NameValuePair> params = new ArrayList<NameValuePair>(1);
-            params.add(new BasicNameValuePair("page", dataAsString));
+            params.add(new BasicNameValuePair("page", dataAsString)); //Add parameter page POST request ;)
             try {
                 httppost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
             } catch (UnsupportedEncodingException e) {
@@ -254,7 +242,7 @@ public class MainActivity extends ActionBarActivity {
             //Execute and get the response.
             HttpResponse response2 = null;
             try {
-                response2 = httpclient.execute(httppost);
+                response2 = httpclient.execute(httppost); //POST request.. page > video info stuff
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -268,8 +256,7 @@ public class MainActivity extends ActionBarActivity {
                     e.printStackTrace();
                 }
                 try {
-                    // do something useful
-                    ByteArrayOutputStream content_2 = new ByteArrayOutputStream();
+                    ByteArrayOutputStream content_2 = new ByteArrayOutputStream(); //Create new ByteArray to read the response ;)
 
                     // Read response into a buffered stream
                     int readBytes = 0;
@@ -284,7 +271,7 @@ public class MainActivity extends ActionBarActivity {
 
                     // Return result from buffered stream
                     urlAsString = new String(content_2.toByteArray());
-                    //System.out.println(urlAsString); DEBUG - Should return video URL (From PHP Script)
+                    Log.i("log_tag", urlAsString); //Should return video URL (From PHP Script)
                 } finally {
                     try {
                         instream.close();
@@ -300,7 +287,7 @@ public class MainActivity extends ActionBarActivity {
         }
 
         @Override
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(String result) { //When I have everything done...
             TextView title_box = (TextView) findViewById(R.id.title);
             //TextView videourl_box = (TextView) findViewById(R.id.videourl); DEBUG - REMOVED at 02 01 2014 21:53
             TextView status_box = (TextView) findViewById(R.id.status);
@@ -311,7 +298,7 @@ public class MainActivity extends ActionBarActivity {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
                     .detectDiskReads().detectDiskWrites().detectNetwork() // StrictMode is most commonly used to catch accidental disk or network access on the application's main thread
                     .penaltyLog().build());
-            // instantiate it within the onCreate method
+
             mProgressDialog = new ProgressDialog(MainActivity.this);
             mProgressDialog.setMessage("Downloading from YouTube...");
             mProgressDialog.setIndeterminate(true);
@@ -325,7 +312,7 @@ public class MainActivity extends ActionBarActivity {
             //testo.setText(videoid);
             //videourl_box.setText(urlAsString); DEBUG - REMOVED at 02 01 2014 21:53
             //urlAsString.trim().length() > 15
-            if (urlAsString.trim().length() > 15) {
+            if (urlAsString.trim().length() > 15) { //Check if url is not just signature= (empty)
                 status_box.setText("Status: Video Download Available! (High Quality)");
                 status_box.setTextColor(Color.GREEN);
 
@@ -353,6 +340,7 @@ public class MainActivity extends ActionBarActivity {
                 //mp3_butt.setClickable(false);
             }
 
+            //Download MP3
             mp3_butt.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -368,6 +356,7 @@ public class MainActivity extends ActionBarActivity {
                 }
             });
 
+            //Download Video MP4
             download_butt.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -433,6 +422,7 @@ public class MainActivity extends ActionBarActivity {
             });
             */
 
+            //Click on the Title to copy video title ;))
             title_box.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
@@ -446,7 +436,7 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    public void readWebpage(String videocode) {
+    public void readWebpage(String videocode) { //wif videocode as input calls the task that downloads and parses video info stuff
         DownloadWebPageTask task = new DownloadWebPageTask();
         task.execute("http://www.youtube.com/get_video_info?video_id="+videocode);
     }
@@ -468,8 +458,7 @@ public class MainActivity extends ActionBarActivity {
         return result;
     }
 
-    // usually, subclasses of AsyncTask are declared inside the activity class.
-// that way, you can easily modify the UI thread from here
+    //Download Class - Download inside application
     private class DownloadTask extends AsyncTask<String, Integer, String> {
 
         private Context context;
@@ -481,7 +470,7 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            mProgressDialog.show();
+            mProgressDialog.show(); //Shows progressdialog we created before ;)
         }
 
         @Override
@@ -562,7 +551,7 @@ public class MainActivity extends ActionBarActivity {
         }
 
         @Override
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(String result) { //Download Result
             mProgressDialog.dismiss();
             if (result != null)
                 Toast.makeText(context, "Download Error: " + result, Toast.LENGTH_LONG).show();
