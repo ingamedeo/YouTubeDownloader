@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -52,6 +54,7 @@ import java.util.List;
 import java.util.Scanner;
 
 //Version: 0.5b
+//getResources().getString(R.string.mystring); How to use strings from XML
 
 public class MainActivity extends ActionBarActivity {
 
@@ -71,10 +74,15 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (isOnline()==false) { //Check if you are online or not ;)
+            Toast.makeText(context, getResources().getString(R.string.no_internet), Toast.LENGTH_LONG).show();
+            finish();
+        }
+
         //Create a disclaimer.
         final AlertDialog alertDialog = new AlertDialog.Builder(context).create();
-        alertDialog.setTitle("WARNING! Disclaimer");
-        alertDialog.setMessage("WARNING: Downloading video from YouTube is illegal. I assume no responsibility for violation of laws pertaining to media downloading, and makes this good faith effort to inform you of your responsibilities in this regard. If you break the law, you’re on your own. Thanks");
+        alertDialog.setTitle(getResources().getString(R.string.disclaimer_title));
+        alertDialog.setMessage(getResources().getString(R.string.disclaimer_text));
         alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
            public void onClick(DialogInterface dialog, int which) {
         //do stuff
@@ -163,6 +171,16 @@ public class MainActivity extends ActionBarActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
+    }
+
+    public boolean isOnline() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnected()) {
+            return true;
+        }
+        return false;
     }
 
     private class DownloadWebPageTask extends AsyncTask<String, Void, String> {
@@ -302,7 +320,7 @@ public class MainActivity extends ActionBarActivity {
                     .penaltyLog().build());
 
             mProgressDialog = new ProgressDialog(MainActivity.this);
-            mProgressDialog.setMessage("Downloading from YouTube...");
+            mProgressDialog.setMessage(getResources().getString(R.string.progress_message));
             mProgressDialog.setIndeterminate(true);
             mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             mProgressDialog.setCancelable(true);
@@ -315,7 +333,7 @@ public class MainActivity extends ActionBarActivity {
             //videourl_box.setText(urlAsString); DEBUG - REMOVED at 02 01 2014 21:53
             //urlAsString.trim().length() > 15
             if (urlAsString.trim().length() > 15) { //Check if url is not just signature= (empty)
-                status_box.setText("Status: Video Download Available! (High Quality)");
+                status_box.setText(getResources().getString(R.string.status_ok));
                 status_box.setTextColor(Color.GREEN);
 
                 //Set title
@@ -328,11 +346,11 @@ public class MainActivity extends ActionBarActivity {
                 //mp3_butt.setEnabled(true);
                 //mp3_butt.setClickable(true);
             } else {
-                status_box.setText("Status: Sorry. No video download available. Maybe you can download MP3.");
+                status_box.setText(getResources().getString(R.string.status_error));
                 status_box.setTextColor(Color.RED);
 
                 //Set title
-                title_box.setText("Can't get video title. Sorry :(");
+                title_box.setText(getResources().getString(R.string.status_title_error));
 
                 //Disable the button ;)
                 download_butt.setEnabled(false);
@@ -431,7 +449,7 @@ public class MainActivity extends ActionBarActivity {
                     //Copy to ClipBoard
                     ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
                     clipboard.setText(title);
-                    Toast.makeText(getApplicationContext(), "Title copied to clipboard!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), getResources().getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show();
                     return false;
                 }
             });
@@ -556,12 +574,9 @@ public class MainActivity extends ActionBarActivity {
         protected void onPostExecute(String result) { //Download Result
             mProgressDialog.dismiss();
             if (result != null)
-                Toast.makeText(context, "Download Error: " + result, Toast.LENGTH_LONG).show();
+                Toast.makeText(context, getResources().getString(R.string.download_error) + " " + result, Toast.LENGTH_LONG).show();
             else
-                Toast.makeText(context, "Download Completed! Your file ("+videoid +".mp4) has been saved to your Download folder.", Toast.LENGTH_LONG).show();
-            //Intent intent = new Intent(Intent.ACTION_VIEW);
-            //intent.setDataAndType(Uri.fromFile(new File(Environment.getExternalStorageDirectory() + "/wordfall.apk")), "application/vnd.android.package-archive");
-            //startActivity(intent);
+                Toast.makeText(context, getResources().getString(R.string.download_completed), Toast.LENGTH_LONG).show();
         }
     }
 }
