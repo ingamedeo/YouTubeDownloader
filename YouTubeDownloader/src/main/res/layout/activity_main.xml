@@ -39,7 +39,19 @@
         android:layout_height="wrap_content"
         android:text="Download MP3"
         android:id="@+id/downmp3"
-        android:layout_marginTop="72dp"
+        android:clickable="false"
+        android:enabled="false"
         android:layout_below="@+id/download"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="40dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/downloadsize_def"
+        android:id="@+id/downloadsize"
+        android:layout_below="@+id/downmp3"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp" />
 </RelativeLayout>

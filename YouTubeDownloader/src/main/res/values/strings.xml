@@ -6,8 +6,9 @@
     <string name="action_settings">Settings</string>
     <string name="title_def">YouTube Video Title</string>
     <string name="status_def">Status: None</string>
+    <string name="downloadsize_def">Download Size</string>
     <string name="downmp3_butt_text">Download MP3</string>
-    <string name="down_butt_text">Download video</string>
+    <string name="down_butt_text">Download video (Not implemented yet)</string>
     <string name="no_internet">No internet connection!</string>
     <string name="disclaimer_title">WARNING! Disclaimer</string>
     <string name="disclaimer_text">WARNING: Downloading video from YouTube is illegal. I assume no responsibility for violation of laws pertaining to media downloading, and makes this good faith effort to inform you of your responsibilities in this regard. If you break the law, you’re on your own. Thanks</string>

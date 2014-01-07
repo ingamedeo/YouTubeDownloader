@@ -65,6 +65,8 @@ public class MainActivity extends ActionBarActivity {
     final Context context = this;
     ProgressDialog mProgressDialog;
     String mp3url;
+    String status;
+    String downloadsize;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -152,6 +154,16 @@ public class MainActivity extends ActionBarActivity {
 
                 mp3url = output.substring(output.indexOf("<downloadurl><![CDATA[")+22, output.indexOf("/]]></downloadurl>")); //Extract mp3 download URL from XML file
                 Log.i("log_tag",mp3url); //This should return mp3 download url ;)
+                title = output.substring(output.indexOf("<file><![CDATA[")+15, output.indexOf("]]></file>")-4); //Extract title from XML file (without .mp3)
+                Log.i("log_tag",title); //This should return video title ;)
+                status = output.substring(output.indexOf("<status step=")+14, output.indexOf("/>")-1); //Extract status from XML file
+                Log.i("log_tag", "Status: " + status); //This should return video download status ;)
+                downloadsize = output.substring(output.indexOf("<filesize><![CDATA[")+19, output.indexOf("]]></filesize>")); //Extractdownload size from XML file
+                Log.i("log_tag", "Download Size: " + downloadsize); //This should return mp3 download size ;)
+
+                if (status.equals("finished")) {
+                    Log.i("log_tag", "File ready to download ;)");
+                }
 
             } catch (ClientProtocolException e) {
                 e.printStackTrace();
@@ -224,10 +236,15 @@ public class MainActivity extends ActionBarActivity {
                         String val = pair.getValue();
                         //System.out.println(key + " " + val);
 
+                        /*
+
+                        WARNING: This function has been disabled! Now Video Title is retrived through vidtomp3 api ;)
+
                         if (key.equals("title")) { //Parses page and get video title ;)
                             title = val;
                             //System.out.println(title); DEBUG Deleted on 02 01 2014
                         }
+                        */
                     }
 
                     BufferedReader buffer = new BufferedReader(
@@ -311,6 +328,7 @@ public class MainActivity extends ActionBarActivity {
             TextView title_box = (TextView) findViewById(R.id.title);
             //TextView videourl_box = (TextView) findViewById(R.id.videourl); DEBUG - REMOVED at 02 01 2014 21:53
             TextView status_box = (TextView) findViewById(R.id.status);
+            TextView downloadsize_box = (TextView) findViewById(R.id.downloadsize);
             Button download_butt = (Button) findViewById(R.id.download);
             Button mp3_butt = (Button) findViewById(R.id.downmp3);
 
@@ -332,19 +350,25 @@ public class MainActivity extends ActionBarActivity {
             //testo.setText(videoid);
             //videourl_box.setText(urlAsString); DEBUG - REMOVED at 02 01 2014 21:53
             //urlAsString.trim().length() > 15
-            if (urlAsString.trim().length() > 15) { //Check if url is not just signature= (empty)
+            //if (urlAsString.trim().length() > 15) { //Check if url is not just signature= (empty)
+            if (status.equals("finished")) { //New check..check if status equals finished..
                 status_box.setText(getResources().getString(R.string.status_ok));
                 status_box.setTextColor(Color.GREEN);
 
                 //Set title
                 title_box.setText(title);
 
-                //Enable the button ;)
-                download_butt.setEnabled(true);
-                download_butt.setClickable(true);
+                //Set Download Size
+                downloadsize_box.setText(getResources().getString(R.string.downloadsize_def) + ": " + downloadsize);
 
-                //mp3_butt.setEnabled(true);
-                //mp3_butt.setClickable(true);
+
+                //Enable the button ;) Not implemented yet
+                //download_butt.setEnabled(true);
+                //download_butt.setClickable(true);
+
+                //Enable the MP3 button ;)
+                mp3_butt.setEnabled(true);
+                mp3_butt.setClickable(true);
             } else {
                 status_box.setText(getResources().getString(R.string.status_error));
                 status_box.setTextColor(Color.RED);
@@ -353,11 +377,12 @@ public class MainActivity extends ActionBarActivity {
                 title_box.setText(getResources().getString(R.string.status_title_error));
 
                 //Disable the button ;)
-                download_butt.setEnabled(false);
-                download_butt.setClickable(false);
+                //download_butt.setEnabled(false);
+                //download_butt.setClickable(false);
 
-                //mp3_butt.setEnabled(false);
-                //mp3_butt.setClickable(false);
+                //Disable the MP3 button ;)
+                mp3_butt.setEnabled(false);
+                mp3_butt.setClickable(false);
             }
 
             //Download MP3
@@ -526,7 +551,7 @@ public class MainActivity extends ActionBarActivity {
                     //Save video in sdcard
                     //output = new FileOutputStream(Environment.getExternalStorageDirectory() + "/" + videoid +".mp4");
                     //Save video in the Download folder
-                    output = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + videoid +".mp4");
+                    output = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + videoid +".mp3");
 
                     byte data[] = new byte[4096];
                     long total = 0;
