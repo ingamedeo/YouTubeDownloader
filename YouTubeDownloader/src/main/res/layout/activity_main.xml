@@ -32,7 +32,8 @@
         android:enabled="false"
         android:layout_below="@+id/status"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="36dp" />
+        android:layout_marginTop="36dp"
+        android:visibility="gone"/>
 
     <Button
         android:layout_width="wrap_content"
@@ -54,4 +55,13 @@
         android:layout_below="@+id/downmp3"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="50dp" />
+
+    <ProgressBar
+        android:id="@+id/progressBar1"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button1"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"/>
 </RelativeLayout>
