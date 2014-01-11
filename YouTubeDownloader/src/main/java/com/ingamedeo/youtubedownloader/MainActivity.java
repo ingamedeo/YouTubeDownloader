@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -13,12 +14,15 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
 import android.os.StrictMode;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.text.ClipboardManager;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,6 +37,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 
 import java.io.BufferedReader;
@@ -58,6 +64,8 @@ import java.util.Scanner;
 
 public class MainActivity extends ActionBarActivity {
 
+    private static final int RESULT_SETTINGS = 1;
+    SharedPreferences sharedPrefs;
     String encoding = "UTF-8";
     String title;
     Float length;
@@ -67,6 +75,10 @@ public class MainActivity extends ActionBarActivity {
     String mp3url;
     String status;
     String downloadsize;
+    String returnString;
+    String url;
+    private ProgressBar spinner;
+    boolean savemode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +87,17 @@ public class MainActivity extends ActionBarActivity {
                 .penaltyLog().build());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //Setting up spinner
+        spinner = (ProgressBar)findViewById(R.id.progressBar1);
+        spinner.setVisibility(View.GONE);
+
+        // Get preferences. Inizialization.
+        sharedPrefs = PreferenceManager // Create a Preferences Object. This is used to retrive preferences from menu.
+                .getDefaultSharedPreferences(this);
+        savemode = sharedPrefs.getBoolean("prefSavename", false);
+        Log.i("log_tag", "Save Pref looks like is: " + savemode);
+
 
         if (isOnline()==false) { //Check if you are online or not ;)
             Toast.makeText(context, getResources().getString(R.string.no_internet), Toast.LENGTH_LONG).show();
@@ -101,11 +124,11 @@ public class MainActivity extends ActionBarActivity {
 
     void handleSendText(Intent intent) { //Gets share data from YouTube app.
         String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
-        String url;
         String videocode;
-        String returnString;
+        //String returnString;
         if (sharedText != null) {
             // Update UI to reflect text being shared
+            spinner.setVisibility(View.VISIBLE);
 
             //Get Video URL - Removes last part ;)
             url = sharedText.replaceAll("&feature=youtube_gdata_player","");
@@ -117,62 +140,6 @@ public class MainActivity extends ActionBarActivity {
 
             readWebpage(videocode); //Calls readWebpage - Parses http://www.youtube.com/get_video_info?video_id= and downloads video info ;)
 
-            /*
-                          Code Below uses vidtomp3 remote api to convert video to MP3!
-                                          MP3 Download function ;)
-             */
-            ArrayList<NameValuePair> postParameters = new ArrayList<NameValuePair>();
-            postParameters.add(new BasicNameValuePair("mediaurl", url)); //Post Request mediaurl as parameter ;)
-
-            String response = null;
-
-            returnString = null;
-
-            //execute request and get response ;)
-            try {
-                response = CustomHttpClient.executeHttpPost(
-                        "http://www.vidtomp3.com/cc/conversioncloud.php",  // vidtomp3 remove server api
-                        postParameters);
-
-                String result = response.toString(); //This should be removed. To need to convert to string.
-                returnString = result.substring(result.indexOf("statusurl")+12, result.length()-4); //Returns the statusurl (It's a sort of JSON...but not parsing right way)
-                returnString = returnString.replace("\\", ""); //This removes backslashes from the url ;))
-                Log.i("log_tag", returnString); //Logs statusurl returned by the api
-
-            }
-            catch (Exception e) {
-                    Log.e("log_tag","Error while connecting to vidtomp3 api! " + e.toString());
-            }
-
-            try { //Connects to statusurl..should get an XML document..anyway..I'm not parsing it ;)
-                DefaultHttpClient httpClient = new DefaultHttpClient();
-                HttpGet httpGet = new HttpGet(returnString);
-
-                HttpResponse httpResponse = httpClient.execute(httpGet);
-                HttpEntity httpEntity = httpResponse.getEntity();
-                String output = EntityUtils.toString(httpEntity);
-
-                mp3url = output.substring(output.indexOf("<downloadurl><![CDATA[")+22, output.indexOf("/]]></downloadurl>")); //Extract mp3 download URL from XML file
-                Log.i("log_tag",mp3url); //This should return mp3 download url ;)
-                title = output.substring(output.indexOf("<file><![CDATA[")+15, output.indexOf("]]></file>")-4); //Extract title from XML file (without .mp3)
-                Log.i("log_tag",title); //This should return video title ;)
-                status = output.substring(output.indexOf("<status step=")+14, output.indexOf("/>")-1); //Extract status from XML file
-                Log.i("log_tag", "Status: " + status); //This should return video download status ;)
-                downloadsize = output.substring(output.indexOf("<filesize><![CDATA[")+19, output.indexOf("]]></filesize>")); //Extractdownload size from XML file
-                Log.i("log_tag", "Download Size: " + downloadsize); //This should return mp3 download size ;)
-
-                if (status.equals("finished")) {
-                    Log.i("log_tag", "File ready to download ;)");
-                }
-
-            } catch (ClientProtocolException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
-
         }
 
     }
@@ -183,6 +150,40 @@ public class MainActivity extends ActionBarActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+
+        switch (item.getItemId())
+        {
+            case R.id.action_settings:
+                // Single menu item is selected do something
+                // Ex: launching new activity/screen or show alert message
+                Intent i = new Intent(getBaseContext(), MenuActivity.class);
+                startActivityForResult(i, RESULT_SETTINGS);
+                return true;
+            case R.id.exit:
+                finish();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) { //When you update the settings in menu, this updates them in the app.
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case RESULT_SETTINGS:
+                sharedPrefs = PreferenceManager // Create a Preferences Object. This is used to retrive preferences from menu.
+                        .getDefaultSharedPreferences(this);
+                savemode = sharedPrefs.getBoolean("prefSavename", false);
+                Log.i("log_tag", "Save Pref looks like is: " + savemode);
+                break;
+
+        }
+
     }
 
     public boolean isOnline() {
@@ -283,7 +284,10 @@ public class MainActivity extends ActionBarActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            HttpEntity entity = response2.getEntity();
+            HttpEntity entity = null;
+            if (response2 != null) {
+                entity = response2.getEntity();
+            }
 
             if (entity != null) {
                 InputStream instream = null;
@@ -318,6 +322,72 @@ public class MainActivity extends ActionBarActivity {
                 }
             }
 
+                        /*
+                          Code Below uses vidtomp3 remote api to convert video to MP3!
+                                          MP3 Download function ;)
+             */
+            ArrayList<NameValuePair> postParameters = new ArrayList<NameValuePair>();
+            postParameters.add(new BasicNameValuePair("mediaurl", url)); //Post Request mediaurl as parameter ;)
+
+            String response_mp3 = null;
+
+            returnString = null;
+
+            //execute request and get response ;)
+            try {
+                response_mp3 = CustomHttpClient.executeHttpPost(
+                        "http://www.vidtomp3.com/cc/conversioncloud.php",  // vidtomp3 remove server api
+                        postParameters);
+
+                String result = response_mp3.toString(); //This should be removed. To need to convert to string.
+                returnString = result.substring(result.indexOf("statusurl")+12, result.length()-4); //Returns the statusurl (It's a sort of JSON...but not parsing right way)
+                returnString = returnString.replace("\\", ""); //This removes backslashes from the url ;))
+                Log.i("log_tag", "1st: " + returnString); //Logs statusurl returned by the api
+
+            }
+            catch (Exception e) {
+                Log.e("log_tag","Error while connecting to vidtomp3 api! " + e.toString());
+            }
+
+            try { //Connects to statusurl..should get an XML document..anyway..I'm not parsing it ;)
+                DefaultHttpClient httpClient = new DefaultHttpClient();
+
+                //Set timeout ;)
+                final HttpParams httpParameters = httpClient.getParams();
+
+                HttpConnectionParams.setConnectionTimeout(httpParameters, 5 * 1000);
+                HttpConnectionParams.setSoTimeout(httpParameters, 5 * 1000);
+
+                HttpGet httpGet = new HttpGet(returnString);
+
+                HttpResponse httpResponse = httpClient.execute(httpGet);
+                HttpEntity httpEntity = httpResponse.getEntity();
+                String output = EntityUtils.toString(httpEntity);
+
+                mp3url = output.substring(output.indexOf("<downloadurl><![CDATA[")+22, output.indexOf("/]]></downloadurl>")); //Extract mp3 download URL from XML file
+                Log.i("log_tag","2nd: " + mp3url); //This should return mp3 download url ;)
+                title = output.substring(output.indexOf("<file><![CDATA[")+15, output.indexOf("]]></file>")-4); //Extract title from XML file (without .mp3)
+                Log.i("log_tag",title); //This should return video title ;)
+                status = output.substring(output.indexOf("<status step=")+14, output.indexOf("/>")-1); //Extract status from XML file
+                Log.i("log_tag", "Status: " + status); //This should return video download status ;)
+                downloadsize = output.substring(output.indexOf("<filesize><![CDATA[")+19, output.indexOf("]]></filesize>")); //Extractdownload size from XML file
+                Log.i("log_tag", "Download Size: " + downloadsize); //This should return mp3 download size ;)
+
+                if (status.equals("finished")) {
+                    Log.i("log_tag", "File ready to download ;)");
+                }
+
+            } catch (ClientProtocolException e) {
+                e.printStackTrace();
+                Log.i("log_tag", "There is a problem with your download ;(");
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.i("log_tag", "There is a problem with your download ;(");
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.i("log_tag", "There is a problem with your download ;(");
+            }
+
 
             //This return is never read.
             return response;
@@ -325,97 +395,99 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(String result) { //When I have everything done...
-            TextView title_box = (TextView) findViewById(R.id.title);
-            //TextView videourl_box = (TextView) findViewById(R.id.videourl); DEBUG - REMOVED at 02 01 2014 21:53
-            TextView status_box = (TextView) findViewById(R.id.status);
-            TextView downloadsize_box = (TextView) findViewById(R.id.downloadsize);
-            Button download_butt = (Button) findViewById(R.id.download);
-            Button mp3_butt = (Button) findViewById(R.id.downmp3);
+
+            try {
+                TextView title_box = (TextView) findViewById(R.id.title);
+                //TextView videourl_box = (TextView) findViewById(R.id.videourl); DEBUG - REMOVED at 02 01 2014 21:53
+                TextView status_box = (TextView) findViewById(R.id.status);
+                TextView downloadsize_box = (TextView) findViewById(R.id.downloadsize);
+                Button download_butt = (Button) findViewById(R.id.download);
+                Button mp3_butt = (Button) findViewById(R.id.downmp3);
 
 
-            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
-                    .detectDiskReads().detectDiskWrites().detectNetwork() // StrictMode is most commonly used to catch accidental disk or network access on the application's main thread
-                    .penaltyLog().build());
+                StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                        .detectDiskReads().detectDiskWrites().detectNetwork() // StrictMode is most commonly used to catch accidental disk or network access on the application's main thread
+                        .penaltyLog().build());
 
-            mProgressDialog = new ProgressDialog(MainActivity.this);
-            mProgressDialog.setMessage(getResources().getString(R.string.progress_message));
-            mProgressDialog.setIndeterminate(true);
-            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            mProgressDialog.setCancelable(true);
+                mProgressDialog = new ProgressDialog(MainActivity.this);
+                mProgressDialog.setMessage(getResources().getString(R.string.progress_message));
+                mProgressDialog.setIndeterminate(true);
+                mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                mProgressDialog.setCancelable(true);
 
-            //System.out.println(title);
+                //System.out.println(title);
 
-            //testo.setText(Html.fromHtml(uri));
+                //testo.setText(Html.fromHtml(uri));
 
-            //testo.setText(videoid);
-            //videourl_box.setText(urlAsString); DEBUG - REMOVED at 02 01 2014 21:53
-            //urlAsString.trim().length() > 15
-            //if (urlAsString.trim().length() > 15) { //Check if url is not just signature= (empty)
-            if (status.equals("finished")) { //New check..check if status equals finished..
-                status_box.setText(getResources().getString(R.string.status_ok));
-                status_box.setTextColor(Color.GREEN);
+                //testo.setText(videoid);
+                //videourl_box.setText(urlAsString); DEBUG - REMOVED at 02 01 2014 21:53
+                //urlAsString.trim().length() > 15
+                //if (urlAsString.trim().length() > 15) { //Check if url is not just signature= (empty)
+                if (status.equals("finished")) { //New check..check if status equals finished..
+                    status_box.setText(getResources().getString(R.string.status_ok));
+                    status_box.setTextColor(Color.GREEN);
 
-                //Set title
-                title_box.setText(title);
+                    //Set title
+                    title_box.setText(title);
 
-                //Set Download Size
-                downloadsize_box.setText(getResources().getString(R.string.downloadsize_def) + ": " + downloadsize);
+                    //Set Download Size
+                    downloadsize_box.setText(getResources().getString(R.string.downloadsize_def) + ": " + downloadsize);
 
 
-                //Enable the button ;) Not implemented yet
-                //download_butt.setEnabled(true);
-                //download_butt.setClickable(true);
+                    //Enable the button ;) Not implemented yet
+                    //download_butt.setEnabled(true);
+                    //download_butt.setClickable(true);
 
-                //Enable the MP3 button ;)
-                mp3_butt.setEnabled(true);
-                mp3_butt.setClickable(true);
-            } else {
-                status_box.setText(getResources().getString(R.string.status_error));
-                status_box.setTextColor(Color.RED);
+                    //Enable the MP3 button ;)
+                    mp3_butt.setEnabled(true);
+                    mp3_butt.setClickable(true);
+                } else {
+                    status_box.setText(getResources().getString(R.string.status_error));
+                    status_box.setTextColor(Color.RED);
 
-                //Set title
-                title_box.setText(getResources().getString(R.string.status_title_error));
+                    //Set title
+                    title_box.setText(getResources().getString(R.string.status_title_error));
 
-                //Disable the button ;)
-                //download_butt.setEnabled(false);
-                //download_butt.setClickable(false);
+                    //Disable the button ;)
+                    //download_butt.setEnabled(false);
+                    //download_butt.setClickable(false);
 
-                //Disable the MP3 button ;)
-                mp3_butt.setEnabled(false);
-                mp3_butt.setClickable(false);
-            }
-
-            //Download MP3
-            mp3_butt.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    final DownloadTask downloadTask = new DownloadTask(MainActivity.this);
-                    downloadTask.execute(mp3url);
-
-                    mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                        @Override
-                        public void onCancel(DialogInterface dialog) {
-                            downloadTask.cancel(true);
-                        }
-                    });
+                    //Disable the MP3 button ;)
+                    mp3_butt.setEnabled(false);
+                    mp3_butt.setClickable(false);
                 }
-            });
 
-            //Download Video MP4
-            download_butt.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    //Download the video!
+                //Download MP3
+                mp3_butt.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        final DownloadTask downloadTask = new DownloadTask(MainActivity.this);
+                        downloadTask.execute(mp3url);
 
-                    final DownloadTask downloadTask = new DownloadTask(MainActivity.this);
-                    downloadTask.execute(urlAsString);
+                        mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialog) {
+                                downloadTask.cancel(true);
+                            }
+                        });
+                    }
+                });
 
-                    mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                        @Override
-                        public void onCancel(DialogInterface dialog) {
-                            downloadTask.cancel(true);
-                        }
-                    });
+                //Download Video MP4
+                download_butt.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        //Download the video!
+
+                        final DownloadTask downloadTask = new DownloadTask(MainActivity.this);
+                        downloadTask.execute(urlAsString);
+
+                        mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialog) {
+                                downloadTask.cancel(true);
+                            }
+                        });
 
                     /*
                     //
@@ -438,21 +510,21 @@ public class MainActivity extends ActionBarActivity {
                     */
 
 
-                    //AlertDialog!
-                    //final AlertDialog alertDialog = new AlertDialog.Builder(context).create();
-                    //alertDialog.setTitle("YouTube Video Download Started!");
-                    //alertDialog.setMessage("I'm downloading your video ;) Please Wait");
-                    //alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
-                     //   public void onClick(DialogInterface dialog, int which) {
-                            //do stuff
-                     //       alertDialog.dismiss();
-                     //   }
-                    //});
-                    //alertDialog.setIcon(R.drawable.ic_launcher);
-                   // alertDialog.show();
+                        //AlertDialog!
+                        //final AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+                        //alertDialog.setTitle("YouTube Video Download Started!");
+                        //alertDialog.setMessage("I'm downloading your video ;) Please Wait");
+                        //alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
+                        //   public void onClick(DialogInterface dialog, int which) {
+                        //do stuff
+                        //       alertDialog.dismiss();
+                        //   }
+                        //});
+                        //alertDialog.setIcon(R.drawable.ic_launcher);
+                        // alertDialog.show();
 
-                }
-            });
+                    }
+                });
 
             /*
             videourl_box.setOnLongClickListener(new View.OnLongClickListener() {
@@ -467,18 +539,29 @@ public class MainActivity extends ActionBarActivity {
             });
             */
 
-            //Click on the Title to copy video title ;))
-            title_box.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    //Copy to ClipBoard
-                    ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                    clipboard.setText(title);
-                    Toast.makeText(getApplicationContext(), getResources().getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show();
-                    return false;
-                }
-            });
-        }
+                //Click on the Title to copy video title ;))
+                title_box.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        //Copy to ClipBoard
+                        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                        clipboard.setText(title);
+                        Toast.makeText(getApplicationContext(), getResources().getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show();
+                        return false;
+                    }
+                });
+
+                spinner.setVisibility(View.GONE);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.e("log_tag","Error in OnPostExecute :((((");
+                spinner.setVisibility(View.GONE);
+                Toast.makeText(context, getResources().getString(R.string.operation_failed), Toast.LENGTH_LONG).show();
+
+            }
+            }
+
     }
 
     public void readWebpage(String videocode) { //wif videocode as input calls the task that downloads and parses video info stuff
@@ -551,7 +634,11 @@ public class MainActivity extends ActionBarActivity {
                     //Save video in sdcard
                     //output = new FileOutputStream(Environment.getExternalStorageDirectory() + "/" + videoid +".mp4");
                     //Save video in the Download folder
-                    output = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + videoid +".mp3");
+                    if (savemode==true) { //Check Save Pref.
+                        output = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + title +".mp3");
+                    } else {
+                        output = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + videoid +".mp3");
+                    }
 
                     byte data[] = new byte[4096];
                     long total = 0;

@@ -19,5 +19,10 @@
     <string name="download_error">Download Error: </string>
     <string name="download_completed">Download Completed! Your file has been saved to your Download folder.</string>
     <string name="copied_to_clipboard">Title copied to clipboard!</string>
+    <string name="operation_failed">Something went wrong. Please Retry</string>
+    <string name="menu_exit">Exit</string>
+    <string name="pref_settings_category">General Settings</string>
+    <string name="pref_settings_title">Save Songs as title .mp3</string>
+    <string name="pref_settings_summary">Saves songs as title.mp3 instead of videoid.mp3. May not work on some devices.</string>
 
 </resources>
