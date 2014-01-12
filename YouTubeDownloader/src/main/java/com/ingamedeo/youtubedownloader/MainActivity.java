@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
@@ -104,18 +105,25 @@ public class MainActivity extends ActionBarActivity {
             finish();
         }
 
-        //Create a disclaimer.
-        final AlertDialog alertDialog = new AlertDialog.Builder(context).create();
-        alertDialog.setTitle(getResources().getString(R.string.disclaimer_title));
-        alertDialog.setMessage(getResources().getString(R.string.disclaimer_text));
-        alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
-           public void onClick(DialogInterface dialog, int which) {
-        //do stuff
-               alertDialog.dismiss();
-           }
-        });
-        alertDialog.setIcon(R.drawable.ic_launcher);
-        alertDialog.show();
+        if (sharedPrefs.getBoolean("firststart", true)) { //Check if it's the first time you run the application
+            //Create a disclaimer.
+            final AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+            alertDialog.setTitle(getResources().getString(R.string.disclaimer_title));
+            alertDialog.setMessage(getResources().getString(R.string.disclaimer_text));
+            alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    //do stuff
+                    alertDialog.dismiss();
+                }
+            });
+            alertDialog.setIcon(R.drawable.ic_launcher);
+            alertDialog.show();
+
+            //Update Pref
+            SharedPreferences.Editor editor = sharedPrefs.edit();
+            editor.putBoolean("firststart", false);
+            editor.commit();
+        }
 
         //Call handleSendText.
         Intent intent = getIntent();
@@ -160,8 +168,13 @@ public class MainActivity extends ActionBarActivity {
             case R.id.action_settings:
                 // Single menu item is selected do something
                 // Ex: launching new activity/screen or show alert message
-                Intent i = new Intent(getBaseContext(), MenuActivity.class);
-                startActivityForResult(i, RESULT_SETTINGS);
+                if (Build.VERSION.SDK_INT > 11) { //Check API version..Not supported on Gingerbread and previous versions
+                    Intent i = new Intent(getBaseContext(), MenuActivity.class);
+                    startActivityForResult(i, RESULT_SETTINGS);
+                }
+                else {
+                    Toast.makeText(context, getResources().getString(R.string.setting_low_api_error), Toast.LENGTH_LONG).show();
+                }
                 return true;
             case R.id.exit:
                 finish();

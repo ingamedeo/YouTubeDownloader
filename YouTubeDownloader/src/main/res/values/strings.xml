@@ -24,5 +24,6 @@
     <string name="pref_settings_category">General Settings</string>
     <string name="pref_settings_title">Save Songs as title .mp3</string>
     <string name="pref_settings_summary">Saves songs as title.mp3 instead of videoid.mp3. May not work on some devices.</string>
+    <string name="setting_low_api_error">Not supported on your device.</string>
 
 </resources>
