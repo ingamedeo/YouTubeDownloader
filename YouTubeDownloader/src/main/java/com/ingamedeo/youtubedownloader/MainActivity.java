@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -78,6 +79,7 @@ public class MainActivity extends ActionBarActivity {
     String downloadsize;
     String returnString;
     String url;
+    String percent;
     private ProgressBar spinner;
     boolean savemode;
 
@@ -352,7 +354,7 @@ public class MainActivity extends ActionBarActivity {
                         "http://www.vidtomp3.com/cc/conversioncloud.php",  // vidtomp3 remove server api
                         postParameters);
 
-                String result = response_mp3.toString(); //This should be removed. To need to convert to string.
+                String result = response_mp3.toString(); //This should be removed. No need to convert to string.
                 returnString = result.substring(result.indexOf("statusurl")+12, result.length()-4); //Returns the statusurl (It's a sort of JSON...but not parsing right way)
                 returnString = returnString.replace("\\", ""); //This removes backslashes from the url ;))
                 Log.i("log_tag", "1st: " + returnString); //Logs statusurl returned by the api
@@ -377,17 +379,18 @@ public class MainActivity extends ActionBarActivity {
                 HttpEntity httpEntity = httpResponse.getEntity();
                 String output = EntityUtils.toString(httpEntity);
 
-                mp3url = output.substring(output.indexOf("<downloadurl><![CDATA[")+22, output.indexOf("/]]></downloadurl>")); //Extract mp3 download URL from XML file
-                Log.i("log_tag","2nd: " + mp3url); //This should return mp3 download url ;)
-                title = output.substring(output.indexOf("<file><![CDATA[")+15, output.indexOf("]]></file>")-4); //Extract title from XML file (without .mp3)
-                Log.i("log_tag",title); //This should return video title ;)
                 status = output.substring(output.indexOf("<status step=")+14, output.indexOf("/>")-1); //Extract status from XML file
                 Log.i("log_tag", "Status: " + status); //This should return video download status ;)
-                downloadsize = output.substring(output.indexOf("<filesize><![CDATA[")+19, output.indexOf("]]></filesize>")); //Extractdownload size from XML file
-                Log.i("log_tag", "Download Size: " + downloadsize); //This should return mp3 download size ;)
 
                 if (status.equals("finished")) {
                     Log.i("log_tag", "File ready to download ;)");
+
+                    mp3url = output.substring(output.indexOf("<downloadurl><![CDATA[")+22, output.indexOf("/]]></downloadurl>")); //Extract mp3 download URL from XML file
+                    Log.i("log_tag","2nd: " + mp3url); //This should return mp3 download url ;)
+                    title = output.substring(output.indexOf("<file><![CDATA[")+15, output.indexOf("]]></file>")-4); //Extract title from XML file (without .mp3)
+                    Log.i("log_tag",title); //This should return video title ;)
+                    downloadsize = output.substring(output.indexOf("<filesize><![CDATA[")+19, output.indexOf("]]></filesize>")); //Extractdownload size from XML file
+                    Log.i("log_tag", "Download Size: " + downloadsize); //This should return mp3 download size ;)
                 }
 
             } catch (ClientProtocolException e) {
@@ -406,13 +409,18 @@ public class MainActivity extends ActionBarActivity {
             return response;
         }
 
+        //                  ONPOSTEXECUTE START!!
+
         @Override
         protected void onPostExecute(String result) { //When I have everything done...
+
+            final ProgressDialog progressDialog;
 
             try {
                 TextView title_box = (TextView) findViewById(R.id.title);
                 //TextView videourl_box = (TextView) findViewById(R.id.videourl); DEBUG - REMOVED at 02 01 2014 21:53
-                TextView status_box = (TextView) findViewById(R.id.status);
+                final TextView status_box = (TextView) findViewById(R.id.status);
+                final ColorStateList oldColors =  status_box.getTextColors(); //Save default color
                 TextView downloadsize_box = (TextView) findViewById(R.id.downloadsize);
                 Button download_butt = (Button) findViewById(R.id.download);
                 Button mp3_butt = (Button) findViewById(R.id.downmp3);
@@ -455,6 +463,49 @@ public class MainActivity extends ActionBarActivity {
                     mp3_butt.setEnabled(true);
                     mp3_butt.setClickable(true);
                 } else {
+
+                    spinner.setVisibility(View.GONE);
+
+
+                    progressDialog = ProgressDialog.show(MainActivity.this, "", getResources().getString(R.string.converting));
+
+                    new Thread() {
+
+                        public void run() {
+
+                            try{
+
+                                sleep(10000);
+
+                                runOnUiThread(new Runnable() { //Run on UI Thread ;)
+                                    @Override
+                                    public void run() {
+                                        status_box.setText(getResources().getString(R.string.status_checking));
+                                        status_box.setTextColor(oldColors);
+
+                                        spinner.setVisibility(View.VISIBLE); //Spinner while checking...
+                                    }
+                                });
+
+                                readWebpage(videoid);
+
+
+
+                            } catch (Exception e) {
+
+                                Log.e("tag", e.getMessage());
+
+                            }
+
+// dismiss the progress dialog
+
+                            progressDialog.dismiss();
+
+                        }
+
+                    }.start();
+
+
                     status_box.setText(getResources().getString(R.string.status_error));
                     status_box.setTextColor(Color.RED);
 
@@ -575,6 +626,8 @@ public class MainActivity extends ActionBarActivity {
             }
             }
 
+        //                  ONPOSTEXECUTE END!!
+
     }
 
     public void readWebpage(String videocode) { //wif videocode as input calls the task that downloads and parses video info stuff
@@ -599,7 +652,7 @@ public class MainActivity extends ActionBarActivity {
         return result;
     }
 
-    //Download Class - Download inside application
+    //Download Class - Download inside application This class downloads the video converted to Mp3
     private class DownloadTask extends AsyncTask<String, Integer, String> {
 
         private Context context;
