@@ -82,6 +82,7 @@ public class MainActivity extends ActionBarActivity {
     String percent;
     private ProgressBar spinner;
     boolean savemode;
+    String savedir;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,7 +101,13 @@ public class MainActivity extends ActionBarActivity {
                 .getDefaultSharedPreferences(this);
         savemode = sharedPrefs.getBoolean("prefSavename", false);
         Log.i("log_tag", "Save Pref looks like is: " + savemode);
-
+        savedir = sharedPrefs.getString("prefSavedir", "");
+        if (savedir.isEmpty()) { //If empty set SD Card as default ;)
+            SharedPreferences.Editor editor = sharedPrefs.edit();
+            editor.putString("prefSavedir", String.valueOf(Environment.getExternalStorageDirectory()));
+            editor.commit();
+        }
+        Log.i("log_tag", "SaveDir Pref looks like: " + savedir);
 
         if (isOnline()==false) { //Check if you are online or not ;)
             Toast.makeText(context, getResources().getString(R.string.no_internet), Toast.LENGTH_LONG).show();
@@ -181,6 +188,9 @@ public class MainActivity extends ActionBarActivity {
             case R.id.exit:
                 finish();
                 return true;
+            case R.id.donate:
+                Toast.makeText(context, getResources().getString(R.string.donatemessage), Toast.LENGTH_LONG).show();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -195,6 +205,8 @@ public class MainActivity extends ActionBarActivity {
                         .getDefaultSharedPreferences(this);
                 savemode = sharedPrefs.getBoolean("prefSavename", false);
                 Log.i("log_tag", "Save Pref looks like is: " + savemode);
+                savedir = sharedPrefs.getString("prefSavedir", "");
+                Log.i("log_tag", "Save Pref looks like: " + savedir);
                 break;
 
         }
@@ -701,9 +713,9 @@ public class MainActivity extends ActionBarActivity {
                     //output = new FileOutputStream(Environment.getExternalStorageDirectory() + "/" + videoid +".mp4");
                     //Save video in the Download folder
                     if (savemode==true) { //Check Save Pref.
-                        output = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + title +".mp3");
+                        output = new FileOutputStream(savedir + "/" + title +".mp3");
                     } else {
-                        output = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + videoid +".mp3");
+                        output = new FileOutputStream(savedir + "/" + videoid +".mp3");
                     }
 
                     byte data[] = new byte[4096];
