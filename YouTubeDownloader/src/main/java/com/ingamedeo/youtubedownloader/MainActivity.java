@@ -150,8 +150,8 @@ public class MainActivity extends ActionBarActivity {
             //Get Video URL - Removes last part ;)
             url = sharedText.replaceAll("&feature=youtube_gdata_player","");
 
-            //Get video code
-            videocode = url.substring(url.lastIndexOf("=") + 1);
+            //Get video code - Updated YouTube Version! Switched from = to youtu.be/ - 16/04/2014
+            videocode = url.substring(url.lastIndexOf("youtu.be/") + 1);
 
             videoid = videocode; //Maybe this can be removed
 
