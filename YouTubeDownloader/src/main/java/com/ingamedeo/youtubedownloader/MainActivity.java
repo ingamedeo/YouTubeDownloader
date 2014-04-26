@@ -148,10 +148,14 @@ public class MainActivity extends ActionBarActivity {
             spinner.setVisibility(View.VISIBLE);
 
             //Get Video URL - Removes last part ;)
-            url = sharedText.replaceAll("&feature=youtube_gdata_player","");
+            //url = sharedText.replaceAll("&feature=youtube_gdata_player","");
+
+            url = sharedText.substring(sharedText.indexOf("http://"));
 
             //Get video code - Updated YouTube Version! Switched from = to youtu.be/ - 16/04/2014
-            videocode = url.substring(url.lastIndexOf("youtu.be/") + 1);
+            videocode = url.substring(url.lastIndexOf("youtu.be/")+9);
+
+            Log.i("log_tag", videocode);
 
             videoid = videocode; //Maybe this can be removed
 
@@ -397,7 +401,8 @@ public class MainActivity extends ActionBarActivity {
                 if (status.equals("finished")) {
                     Log.i("log_tag", "File ready to download ;)");
 
-                    mp3url = output.substring(output.indexOf("<downloadurl><![CDATA[")+22, output.indexOf("/]]></downloadurl>")); //Extract mp3 download URL from XML file
+                    //Changed cos vidtomp3 changed their output 26-04-2014
+                    mp3url = output.substring(output.indexOf("<downloadurl><![CDATA[")+22, output.indexOf("]]></downloadurl>")); //Extract mp3 download URL from XML file
                     Log.i("log_tag","2nd: " + mp3url); //This should return mp3 download url ;)
                     title = output.substring(output.indexOf("<file><![CDATA[")+15, output.indexOf("]]></file>")-4); //Extract title from XML file (without .mp3)
                     Log.i("log_tag",title); //This should return video title ;)
@@ -447,6 +452,7 @@ public class MainActivity extends ActionBarActivity {
                 mProgressDialog.setIndeterminate(true);
                 mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                 mProgressDialog.setCancelable(true);
+                mProgressDialog.setProgressNumberFormat(null); //Doesn't show number 0/100
 
                 //System.out.println(title);
 
