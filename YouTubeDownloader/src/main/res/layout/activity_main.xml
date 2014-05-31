@@ -11,7 +11,7 @@
         android:id="@+id/title"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="44dp" />
+        android:layout_marginTop="44dp"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -21,19 +21,7 @@
         android:id="@+id/status"
         android:layout_marginTop="37dp"
         android:layout_below="@+id/title"
-        android:layout_centerHorizontal="true" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/down_butt_text"
-        android:id="@+id/download"
-        android:clickable="false"
-        android:enabled="false"
-        android:layout_below="@+id/status"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="36dp"
-        android:visibility="gone"/>
+        android:layout_centerHorizontal="true"/>
 
     <Button
         android:layout_width="wrap_content"
@@ -42,9 +30,8 @@
         android:id="@+id/downmp3"
         android:clickable="false"
         android:enabled="false"
-        android:layout_below="@+id/download"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="40dp" />
+        android:layout_marginTop="40dp"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -54,14 +41,13 @@
         android:id="@+id/downloadsize"
         android:layout_below="@+id/downmp3"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp" />
+        android:layout_marginTop="50dp"/>
 
     <ProgressBar
         android:id="@+id/progressBar1"
         style="?android:attr/progressBarStyleLarge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/button1"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"/>
 </RelativeLayout>

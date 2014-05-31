@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/YouTubeDownloader/YouTubeDownloader.iml" filepath="$PROJECT_DIR$/YouTubeDownloader/YouTubeDownloader.iml" />
+      <module fileurl="file://$PROJECT_DIR$/YouTubeDownloader.iml" filepath="$PROJECT_DIR$/YouTubeDownloader.iml" />
+      <module fileurl="file://$PROJECT_DIR$/YouTubeDownloader/YouTubeDownloader-YouTubeDownloader.iml" filepath="$PROJECT_DIR$/YouTubeDownloader/YouTubeDownloader-YouTubeDownloader.iml" />
       <module fileurl="file://$PROJECT_DIR$/YouTubeDownloaderProject.iml" filepath="$PROJECT_DIR$/YouTubeDownloaderProject.iml" />
     </modules>
   </component>

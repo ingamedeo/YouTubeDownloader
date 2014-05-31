@@ -30,6 +30,10 @@
     <string name="converting">Converting your video…</string>
     <string name="donatemessage">If you want to support YouTube Downloader please donate to ingamedeo@gmail.com - PayPal</string>
     <string name="prefsavedir_title">Change Destination Directory</string>
-    <string name="pref_savedir_summary">Set directory where videos are saved. WARNING: Make sure to type it correctly, otherwise download may fail.</string>
+    <string name="pref_savedir_summary">Set directory where videos are saved.</string>
+    <string name="pref_savedir_warn">WARNING: Make sure to type it correctly, otherwise download may fail.</string>
+    <string name="autoupdatepref_title">Auto Update</string>
+    <string name="about_title">About</string>
+    <string name="about_summary">About YouTube Downloader. By ingamedeo</string>
 
 </resources>
