@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.text.ClipboardManager;
 import android.util.Log;
@@ -35,7 +36,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
-import org.apache.http.util.EntityUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -44,36 +44,47 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 //Version: 2.1
+
+/*
+  videoid is NULL >.DONE.<
+  Donate screen
+  SwitchPreference
+
+  Load Data when come back from settings >.DONE.<
+
+ */
 
 public class MainActivity extends ActionBarActivity {
 
     private static final int RESULT_SETTINGS = 1;
-    final Context context = this;
-    SharedPreferences sharedPrefs;
-    String encoding = "UTF-8";
-    String title;
-    Float length;
-    String videoid;
-    ProgressDialog mProgressDialog;
-    String mp3url;
-    String status;
-    String downloadsize;
-    String returnString;
-    String percent;
+    private static final int RESULT_WIFI = 2;
+    private SharedPreferences sharedPrefs;
+    private ProgressDialog mProgressDialog;
+
+    /* <Data> */
+    private String title;
+    private String videoid;
+    private String mp3url;
+    private String status = "";
+    private String downloadsize;
+    /* <Data/> */
+
+    private String returnString;
     boolean savemode;
-    String savedir;
+    private String savedir;
     private boolean autoupdate;
 
     private ProgressBar spinner;
 
-    TextView title_box;
-    TextView status_box;
-    Button mp3_butt;
-    TextView downloadsize_box;
+    private TextView title_box;
+    private TextView status_box;
+    private Button mp3_butt;
+    private TextView downloadsize_box;
 
-    ColorStateList oldColors;
+    private ColorStateList oldColors;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,36 +101,26 @@ public class MainActivity extends ActionBarActivity {
         downloadsize_box = (TextView) findViewById(R.id.downloadsize);
         mp3_butt = (Button) findViewById(R.id.downmp3);
 
+        oldColors =  status_box.getTextColors(); //Save default color
+
+        //Set up ProgressDialog
+        mProgressDialog = new CustomProgressDialog(MainActivity.this);
+        mProgressDialog.setIndeterminate(true);
+        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        mProgressDialog.setCancelable(true);
+        mProgressDialog.setProgressDrawable(getResources().getDrawable(R.drawable.apptheme_progress_horizontal_holo_dark));
+        mProgressDialog.setIndeterminateDrawable(getResources().getDrawable(R.drawable.apptheme_progress_indeterminate_horizontal_holo_dark));
+
         syncpref();
 
-        if (!isOnline()) { //Check if you are online or not ;)
-            Toast.makeText(context, getResources().getString(R.string.no_internet), Toast.LENGTH_LONG).show();
-            finish();
-        }
-
+        /* Check First Time Launch */
         if (sharedPrefs.getBoolean("firststart", true)) { //Check if it's the first time you run the application
-            //Create a disclaimer.
-            new AlertDialog.Builder(this)
-            .setTitle(getResources().getString(R.string.disclaimer_title))
-            .setMessage(getResources().getString(R.string.disclaimer_text))
-            .setCancelable(false)
-            .setPositiveButton(getResources().getString(android.R.string.yes), new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    //Update Pref
-                    SharedPreferences.Editor editor = sharedPrefs.edit();
-                    editor.putBoolean("firststart", false);
-                    editor.commit();
-                    //Dismiss Dialog
-                    dialog.dismiss();
-                }
-            })
-            .setIcon(R.drawable.ic_launcher)
-            .show();
+            //Show a disclaimer.
+            showdialog(0, getResources().getString(R.string.disclaimer_title), getResources().getString(R.string.disclaimer_text));
+        } else {
+            checkandstart();
         }
 
-        //Call handleSendText.
-        Intent intent = getIntent();
-        handleSendText(intent);
     }
 
     void handleSendText(Intent intent) { //Gets share data from YouTube app.
@@ -129,7 +130,15 @@ public class MainActivity extends ActionBarActivity {
             // Update UI to reflect text being shared
             spinner.setVisibility(View.VISIBLE);
 
-            String url = sharedText.substring(sharedText.indexOf("http://"));
+            String url;
+            if (sharedText.contains("http://")) { //Old YouTube App Support
+                url = sharedText.substring(sharedText.indexOf("http://"));
+            } else if (sharedText.contains("https://")) {
+                url = sharedText.substring(sharedText.indexOf("https://"));
+            } else {
+                url = null;
+            }
+
 
             DownloadWebPageTask task = new DownloadWebPageTask();
             task.execute(url);
@@ -157,7 +166,7 @@ public class MainActivity extends ActionBarActivity {
                 finish();
                 return true;
             case R.id.donate:
-                Toast.makeText(context, getResources().getString(R.string.donatemessage), Toast.LENGTH_LONG).show();
+                //getResources().getString(R.string.donatemessage)
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -171,19 +180,25 @@ public class MainActivity extends ActionBarActivity {
             case RESULT_SETTINGS:
                 syncpref();
                 break;
-
+            case RESULT_WIFI:
+                checkandstart();
+                break;
         }
-
     }
 
     public boolean isOnline() {
-        ConnectivityManager cm =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         if (netInfo != null && netInfo.isConnected()) {
             return true;
         }
         return false;
+    }
+
+    public boolean isConnectedWifi(){
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        return (info != null && info.isConnected() && info.getType() == ConnectivityManager.TYPE_WIFI);
     }
 
     private void syncpref() {
@@ -203,12 +218,89 @@ public class MainActivity extends ActionBarActivity {
         Log.i("log_tag", "AutoUpdate looks like is: " + autoupdate);
     }
 
+    /* Check Internet Connection and Start processing */
+    private void checkandstart() {
+        if (!isOnline()) { //Check if you are online or not ;)
+            showdialog(2, getResources().getString(R.string.no_internet_title), getResources().getString(R.string.no_internet_message));
+        } else if (!isConnectedWifi()) {
+            showdialog(1, getString(R.string.mobile_warn_title), getString(R.string.mobile_warn_message));
+        } else { //Start Processing
+
+            //Call handleSendText.
+            Intent intent = getIntent();
+            handleSendText(intent);
+        }
+    }
+
+    /* Show Dialogs in this app */
+    private void showdialog(final int id, String title, String message) {
+        final AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle(title);
+        alert.setMessage(message);
+        alert.setCancelable(false);
+        switch (id) {
+            case 0:
+                alert.setPositiveButton(getResources().getString(android.R.string.yes), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int i) {
+                        //Update Pref
+                        SharedPreferences.Editor editor = sharedPrefs.edit();
+                        editor.putBoolean("firststart", false);
+                        editor.commit();
+                        //Dismiss Dialog
+                        dialog.dismiss();
+
+                        checkandstart();
+                    }
+                });
+                break;
+            case 1:
+                alert.setPositiveButton(getString(R.string.use_3g), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+
+                        //Call handleSendText.
+                        Intent intent = getIntent();
+                        handleSendText(intent);
+
+                    }
+                });
+                alert.setNegativeButton(getString(R.string.turnon_wifi), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        startActivityForResult(new Intent(Settings.ACTION_WIFI_SETTINGS), RESULT_WIFI); //Open Wi-Fi Settings
+                    }
+                });
+                break;
+            case 2:
+                alert.setPositiveButton(getResources().getString(android.R.string.yes), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                        finish();
+                    }
+                });
+                break;
+            case 3:
+                alert.setPositiveButton(getResources().getString(android.R.string.yes), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                });
+                break;
+        }
+        alert.setIcon(R.drawable.ic_launcher);
+        alert.show();
+    }
+
     private class DownloadWebPageTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... urls) {
 
                         /* Code Below uses vidtomp3 remote api to convert video to MP3!
-                                          MP3 Download function ;) */
+                                          - MP3 Download ;) */
 
             ArrayList<NameValuePair> postParameters = new ArrayList<NameValuePair>();
             postParameters.add(new BasicNameValuePair("mediaurl", urls[0])); //Post Request mediaurl as parameter ;)
@@ -224,17 +316,11 @@ public class MainActivity extends ActionBarActivity {
                         postParameters);
 
                 Log.i("log_tag", "API Response: " + response_mp3);
-                String result = response_mp3.toString(); //This should be removed. No need to convert to string.
-                returnString = result.substring(result.indexOf("statusurl")+12, result.length()-4); //Returns the statusurl (It's a sort of JSON...but not parsing right way)
+                returnString = response_mp3.substring(response_mp3.indexOf("statusurl")+12, response_mp3.length()-4); //Returns the statusurl
                 returnString = returnString.replace("\\", ""); //This removes backslashes from the url ;))
                 Log.i("log_tag", "1st: " + returnString); //Logs statusurl returned by the api
 
-            }
-            catch (Exception e) {
-                Log.e("log_tag","Error while connecting to vidtomp3 api! " + e.toString());
-            }
-
-            try { //Connects to statusurl..should get an XML document..anyway..I'm not parsing it ;)
+                // Connects to statusurl..should get an XML document..anyway..I'm not parsing it ;)
                 DefaultHttpClient httpClient = new DefaultHttpClient();
 
                 //Set timeout ;)
@@ -245,40 +331,59 @@ public class MainActivity extends ActionBarActivity {
 
                 HttpGet httpGet = new HttpGet(returnString);
 
-                HttpResponse httpResponse = httpClient.execute(httpGet);
-                HttpEntity httpEntity = httpResponse.getEntity();
-                String output = EntityUtils.toString(httpEntity);
+                while (!status.equals("finished")) { //Repeat until status is finished
+                    Log.i("log_tag", "Looping right now!");
+                    HttpResponse httpResponse = httpClient.execute(httpGet);
+                    HttpEntity httpEntity = httpResponse.getEntity();
 
-                status = output.substring(output.indexOf("<status step=")+14, output.indexOf("/>")-1); //Extract status from XML file
-                Log.i("log_tag", "Status: " + status); //This should return video download status ;)
-
-                if (status.equals("finished")) {
-                    Log.i("log_tag", "File ready to download ;)");
-
-                    //Changed cos vidtomp3 changed their output 26-04-2014
-                    mp3url = output.substring(output.indexOf("<downloadurl><![CDATA[")+22, output.indexOf("]]></downloadurl>")); //Extract mp3 download URL from XML file
-                    Log.i("log_tag","2nd: " + mp3url); //This should return mp3 download url ;)
-                    title = output.substring(output.indexOf("<file><![CDATA[")+15, output.indexOf("]]></file>")-4); //Extract title from XML file (without .mp3)
-                    Log.i("log_tag",title); //This should return video title ;)
-                    downloadsize = output.substring(output.indexOf("<filesize><![CDATA[")+19, output.indexOf("]]></filesize>")); //Extractdownload size from XML file
-                    Log.i("log_tag", "Download Size: " + downloadsize); //This should return mp3 download size ;)
+                    HashMap<String, String> data;
+                    if (httpEntity!=null) {
+                        InputStream instream = httpEntity.getContent();
+                        Vidtomp3parser parser = new Vidtomp3parser();
+                        data = parser.parse(instream);
+                        status = data.get("status");
+                        if (status.equals("finished")) {
+                            videoid = data.get("videoid");
+                            title = data.get("file");
+                            mp3url = data.get("downloadurl");
+                            Log.i("log_tag","2nd: " + mp3url); //This should return mp3 download url ;)
+                            downloadsize = data.get("filesize");
+                            if (mProgressDialog.isShowing()) { //If showing hide it
+                                mProgressDialog.dismiss(); //Dismiss ProgressDialog
+                            }
+                        } else {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    spinner.setVisibility(View.GONE);
+                                    status_box.setText(getResources().getString(R.string.status_checking));
+                                    status_box.setTextColor(oldColors);
+                                    if (!mProgressDialog.isShowing()) { //If not showing we show it
+                                        mProgressDialog.setTitle(getResources().getString(R.string.converting_title));
+                                        mProgressDialog.setMessage(getResources().getString(R.string.converting_message));
+                                        mProgressDialog.show(); //Show ProgressDialog
+                                    }
+                                }
+                            });
+                            Thread.sleep(1000); //Sleeps 1 sec on failed
+                        }
+                    } else {
+                        break;
+                    }
                 }
 
             } catch (ClientProtocolException e) {
                 e.printStackTrace();
-                Log.i("log_tag", "There is a problem with your download ;(");
+                return e.getMessage();
             } catch (IOException e) {
                 e.printStackTrace();
-                Log.i("log_tag", "There is a problem with your download ;(");
+                return e.getMessage();
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.i("log_tag", "There is a problem with your download ;(");
+                return e.getMessage();
             }
 
-
-            //This return is never read.
-            //return response;
-            return null;
+            return null; /* If it's not null something is srs wrong :( */
         }
 
         //                  ONPOSTEXECUTE START!!
@@ -286,122 +391,80 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected void onPostExecute(String result) { //When I have everything done...
 
-            final ProgressDialog progressDialog;
+            if (result!=null) {
+                spinner.setVisibility(View.GONE);
+                showdialog(3, getResources().getString(R.string.download_error_title), result);
+            } else {
 
-            try {
-                oldColors =  status_box.getTextColors(); //Save default color
 
-                mProgressDialog = new ProgressDialog(MainActivity.this);
-                mProgressDialog.setMessage(getResources().getString(R.string.progress_message));
-                mProgressDialog.setIndeterminate(true);
-                mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                mProgressDialog.setCancelable(true);
-                //Only API 11 > >
-                int currentAPIVersion = android.os.Build.VERSION.SDK_INT;
-                if (currentAPIVersion >= android.os.Build.VERSION_CODES.HONEYCOMB) {
-                    mProgressDialog.setProgressNumberFormat(null); //Doesn't show number 0/100
-                }
+                //final ProgressDialog progressDialog;
 
-                if (status.equals("finished")) { //New check..check if status equals finished..
-                    status_box.setText(getResources().getString(R.string.status_ok));
-                    status_box.setTextColor(Color.GREEN);
+                try {
 
-                    //Set title
-                    title_box.setText(title);
+                    if (status.equals("finished")) { //New check..check if status equals finished..
+                        status_box.setText(getResources().getString(R.string.status_ok));
+                        status_box.setTextColor(Color.GREEN);
 
-                    //Set Download Size
-                    downloadsize_box.setText(getResources().getString(R.string.downloadsize_def) + ": " + downloadsize);
+                        //Set title
+                        title_box.setText(title);
 
-                    //Enable the MP3 button ;)
-                    mp3_butt.setEnabled(true);
-                    mp3_butt.setClickable(true);
-                } else {
+                        //Set Download Size
+                        downloadsize_box.setText(getResources().getString(R.string.downloadsize_def) + ": " + downloadsize);
+
+                        //Enable the MP3 button ;)
+                        mp3_butt.setEnabled(true);
+                        mp3_butt.setClickable(true);
+                    } else { //not yet? Something went fuckin wrong :(
+
+                        status_box.setText(getResources().getString(R.string.status_error));
+                        status_box.setTextColor(Color.RED);
+
+                        //Set title
+                        title_box.setText(getResources().getString(R.string.status_title_error));
+
+                        //Disable the MP3 button ;)
+                        mp3_butt.setEnabled(false);
+                        mp3_butt.setClickable(false);
+                    }
+
+                    //Download MP3
+                    mp3_butt.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            final DownloadTask downloadTask = new DownloadTask(MainActivity.this);
+                            downloadTask.execute(mp3url);
+
+                            mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                @Override
+                                public void onCancel(DialogInterface dialog) {
+                                    downloadTask.cancel(true);
+                                }
+                            });
+                        }
+                    });
+
+                    //Click on the Title to copy video title ;))
+                    title_box.setOnLongClickListener(new View.OnLongClickListener() {
+                        @Override
+                        public boolean onLongClick(View v) {
+                            //Copy to ClipBoard
+                            ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                            clipboard.setText(title);
+                            Toast.makeText(getApplicationContext(), getResources().getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show();
+                            return false;
+                        }
+                    });
 
                     spinner.setVisibility(View.GONE);
 
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.e("log_tag","Error in OnPostExecute :((((");
+                    spinner.setVisibility(View.GONE);
+                    showdialog(3, getResources().getString(R.string.download_error_title), result);
 
-                    progressDialog = ProgressDialog.show(MainActivity.this, "", getResources().getString(R.string.converting));
-
-                    new Thread() {
-
-                        public void run() {
-
-                            try{
-
-                                sleep(10000);
-
-                                runOnUiThread(new Runnable() { //Run on UI Thread ;)
-                                    @Override
-                                    public void run() {
-                                        status_box.setText(getResources().getString(R.string.status_checking));
-                                        status_box.setTextColor(oldColors);
-
-                                        spinner.setVisibility(View.VISIBLE); //Spinner while checking...
-                                    }
-                                });
-
-                                //ven30
-
-                            } catch (Exception e) {
-
-                                Log.e("tag", e.getMessage());
-
-                            }
-
-                            // dismiss the progress dialog
-                            progressDialog.dismiss();
-
-                        }
-
-                    }.start();
-
-
-                    status_box.setText(getResources().getString(R.string.status_error));
-                    status_box.setTextColor(Color.RED);
-
-                    //Set title
-                    title_box.setText(getResources().getString(R.string.status_title_error));
-
-                    //Disable the MP3 button ;)
-                    mp3_butt.setEnabled(false);
-                    mp3_butt.setClickable(false);
                 }
 
-                //Download MP3
-                mp3_butt.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        final DownloadTask downloadTask = new DownloadTask(MainActivity.this);
-                        downloadTask.execute(mp3url);
-
-                        mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                            @Override
-                            public void onCancel(DialogInterface dialog) {
-                                downloadTask.cancel(true);
-                            }
-                        });
-                    }
-                });
-
-                //Click on the Title to copy video title ;))
-                title_box.setOnLongClickListener(new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View v) {
-                        //Copy to ClipBoard
-                        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                        clipboard.setText(title);
-                        Toast.makeText(getApplicationContext(), getResources().getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show();
-                        return false;
-                    }
-                });
-
-                spinner.setVisibility(View.GONE);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                Log.e("log_tag","Error in OnPostExecute :((((");
-                spinner.setVisibility(View.GONE);
-                Toast.makeText(context, getResources().getString(R.string.operation_failed), Toast.LENGTH_LONG).show();
 
             }
             }
@@ -423,7 +486,9 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            mProgressDialog.show(); //Shows progressdialog we created before ;)
+            mProgressDialog.setTitle(getResources().getString(R.string.download_title));
+            mProgressDialog.setMessage(getResources().getString(R.string.download_message));
+            mProgressDialog.show(); //Show ProgressDialog
         }
 
         @Override
@@ -511,7 +576,7 @@ public class MainActivity extends ActionBarActivity {
         protected void onPostExecute(String result) { //Download Result
             mProgressDialog.dismiss();
             if (result != null)
-                Toast.makeText(context, getResources().getString(R.string.download_error) + " " + result, Toast.LENGTH_LONG).show();
+                showdialog(3, getResources().getString(R.string.download_error_title), result);
             else
                 Toast.makeText(context, getResources().getString(R.string.download_completed), Toast.LENGTH_LONG).show();
         }

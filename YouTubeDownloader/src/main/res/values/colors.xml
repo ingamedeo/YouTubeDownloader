@@ -3,5 +3,6 @@
 
     <color name="white">#FFFFFF</color>
     <color name="backcol">#151515</color>
+    <color name="red">#DF0101</color>
 
 </resources>
