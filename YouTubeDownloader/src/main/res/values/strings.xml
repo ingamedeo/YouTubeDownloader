@@ -2,25 +2,24 @@
 <resources>
 
     <string name="app_name">YouTube Downloader</string>
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="title_def">YouTube Video Title</string>
     <string name="status_def">Status: None</string>
     <string name="downloadsize_def">Download Size</string>
     <string name="downmp3_butt_text">Download MP3</string>
-    <string name="down_butt_text">Download video (Not implemented yet)</string>
     <string name="no_internet_title">No internet connection detected</string>
     <string name="no_internet_message">Please make sure your network connection is working and retry.</string>
     <string name="disclaimer_title">WARNING! Disclaimer</string>
     <string name="disclaimer_text">WARNING: Downloading video from YouTube is illegal. I assume no responsibility for violation of laws pertaining to media downloading, and makes this good faith effort to inform you of your responsibilities in this regard. If you break the law, you’re on your own. Thanks</string>
     <string name="download_title">Downloading</string>
     <string name="download_message">Downloading from YouTube…</string>
-    <string name="status_ok">Status: Video Download Available! (High Quality)</string>
-    <string name="status_error">Status: Sorry. No MP3 available.</string>
-    <string name="status_checking">Status: Checking…</string>
-    <string name="status_title_error">Can\'t get video title. Sorry :(</string>
+    <string name="status_ok">Status: MP3 Available!</string>
+    <string name="status_error">Status: Sorry. Download Failed.</string>
+    <string name="status_checking">Status: Converting…</string>
+    <string name="status_title_error">Can\'t get MP3 title. Sorry :(</string>
     <string name="download_error_title">Download Error</string>
-    <string name="download_completed">Download Completed! Your file has been saved to your Download folder.</string>
+    <string name="download_error_message">There was a problem during your download. Try again later.</string>
+    <string name="download_completed">Download Completed! Your file has been saved to:</string>
     <string name="copied_to_clipboard">Title copied to clipboard!</string>
     <string name="menu_exit">Exit</string>
     <string name="menu_donate">Donate</string>
@@ -29,10 +28,10 @@
     <string name="pref_settings_summary">Saves songs as title.mp3 instead of videoid.mp3. May not work on some devices.</string>
     <string name="setting_low_api_error">Not supported on your device.</string>
     <string name="converting_title">Converting</string>
-    <string name="converting_message">Converting your video… (this may take some time)</string>
+    <string name="converting_message">Converting your MP3… (this may take some time)</string>
     <string name="donatemessage">If you want to support YouTube Downloader please donate to ingamedeo@gmail.com - PayPal</string>
     <string name="prefsavedir_title">Change Destination Directory</string>
-    <string name="pref_savedir_summary">Set directory where videos are saved.</string>
+    <string name="pref_savedir_summary">Set directory where MP3s are saved.</string>
     <string name="pref_savedir_warn">WARNING: Make sure to type it correctly, otherwise download may fail.</string>
     <string name="autoupdatepref_title">Auto Update</string>
     <string name="about_title">About</string>
@@ -41,5 +40,6 @@
     <string name="mobile_warn_title">Mobile Network</string>
     <string name="use_3g">It\'s okay, use 3G</string>
     <string name="turnon_wifi">Turn on Wi-Fi</string>
+    <string name="downloadb_text">Download MP3</string>
 
 </resources>

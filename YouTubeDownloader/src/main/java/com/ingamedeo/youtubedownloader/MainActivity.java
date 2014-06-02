@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -51,7 +52,9 @@ import java.util.HashMap;
 /*
   videoid is NULL >.DONE.<
   Donate screen
-  SwitchPreference
+  SwitchPreference >.DONE.<
+
+  AUTOUPDATE
 
   Load Data when come back from settings >.DONE.<
 
@@ -63,6 +66,7 @@ public class MainActivity extends ActionBarActivity {
     private static final int RESULT_WIFI = 2;
     private SharedPreferences sharedPrefs;
     private ProgressDialog mProgressDialog;
+    private Context c = this;
 
     /* <Data> */
     private String title;
@@ -72,13 +76,14 @@ public class MainActivity extends ActionBarActivity {
     private String downloadsize;
     /* <Data/> */
 
-    private String returnString;
+    /* Pref Declaration */
     boolean savemode;
     private String savedir;
     private boolean autoupdate;
 
     private ProgressBar spinner;
 
+    //UI Components Declaration
     private TextView title_box;
     private TextView status_box;
     private Button mp3_butt;
@@ -102,6 +107,11 @@ public class MainActivity extends ActionBarActivity {
         mp3_butt = (Button) findViewById(R.id.downmp3);
 
         oldColors =  status_box.getTextColors(); //Save default color
+
+        Typeface font_title = Typeface.createFromAsset(c.getAssets(), "fonts/JosefinSlab-Bold.ttf");
+        title_box.setTypeface(font_title);
+        status_box.setTypeface(font_title);
+        downloadsize_box.setTypeface(font_title);
 
         //Set up ProgressDialog
         mProgressDialog = new CustomProgressDialog(MainActivity.this);
@@ -201,6 +211,7 @@ public class MainActivity extends ActionBarActivity {
         return (info != null && info.isConnected() && info.getType() == ConnectivityManager.TYPE_WIFI);
     }
 
+    /* Sync & Update Pref */
     private void syncpref() {
         // Get preferences. Inizialization.
         sharedPrefs = PreferenceManager // Create a Preferences Object. This is used to retrive preferences from menu.
@@ -283,6 +294,14 @@ public class MainActivity extends ActionBarActivity {
                 });
                 break;
             case 3:
+                if (message==null || message.isEmpty()) { //If result is null, show a default error message
+                    alert.setMessage(getResources().getString(R.string.download_error_message));
+                }
+                status_box.setText(getResources().getString(R.string.status_error));
+                status_box.setTextColor(Color.RED);
+
+                //Set title
+                title_box.setText(getResources().getString(R.string.status_title_error));
                 alert.setPositiveButton(getResources().getString(android.R.string.yes), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
@@ -295,6 +314,7 @@ public class MainActivity extends ActionBarActivity {
         alert.show();
     }
 
+    boolean cancelled = false;
     private class DownloadWebPageTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... urls) {
@@ -307,7 +327,7 @@ public class MainActivity extends ActionBarActivity {
 
             String response_mp3 = null;
 
-            returnString = null;
+            String returnString = null;
 
             //execute request and get response ;)
             try {
@@ -321,18 +341,19 @@ public class MainActivity extends ActionBarActivity {
                 Log.i("log_tag", "1st: " + returnString); //Logs statusurl returned by the api
 
                 // Connects to statusurl..should get an XML document..anyway..I'm not parsing it ;)
-                DefaultHttpClient httpClient = new DefaultHttpClient();
-
-                //Set timeout ;)
-                final HttpParams httpParameters = httpClient.getParams();
-
-                HttpConnectionParams.setConnectionTimeout(httpParameters, 5 * 1000);
-                HttpConnectionParams.setSoTimeout(httpParameters, 5 * 1000);
+                final DefaultHttpClient httpClient = new DefaultHttpClient();
 
                 HttpGet httpGet = new HttpGet(returnString);
 
-                while (!status.equals("finished")) { //Repeat until status is finished
+                while (!status.equals("finished") && !cancelled) { //Repeat until status is finished
                     Log.i("log_tag", "Looping right now!");
+
+                    //Set timeout ;)
+                    final HttpParams httpParameters = httpClient.getParams();
+
+                    HttpConnectionParams.setConnectionTimeout(httpParameters, 5 * 1000);
+                    HttpConnectionParams.setSoTimeout(httpParameters, 5 * 1000);
+
                     HttpResponse httpResponse = httpClient.execute(httpGet);
                     HttpEntity httpEntity = httpResponse.getEntity();
 
@@ -361,11 +382,20 @@ public class MainActivity extends ActionBarActivity {
                                     if (!mProgressDialog.isShowing()) { //If not showing we show it
                                         mProgressDialog.setTitle(getResources().getString(R.string.converting_title));
                                         mProgressDialog.setMessage(getResources().getString(R.string.converting_message));
+                                        mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                            @Override
+                                            public void onCancel(DialogInterface dialogInterface) {
+                                                cancelled = true;
+                                            }
+                                        });
                                         mProgressDialog.show(); //Show ProgressDialog
                                     }
                                 }
                             });
-                            Thread.sleep(1000); //Sleeps 1 sec on failed
+
+                            if (!cancelled) {
+                                Thread.sleep(1000); //Sleeps 1 sec on failed
+                            }
                         }
                     } else {
                         break;
@@ -386,8 +416,6 @@ public class MainActivity extends ActionBarActivity {
             return null; /* If it's not null something is srs wrong :( */
         }
 
-        //                  ONPOSTEXECUTE START!!
-
         @Override
         protected void onPostExecute(String result) { //When I have everything done...
 
@@ -395,10 +423,6 @@ public class MainActivity extends ActionBarActivity {
                 spinner.setVisibility(View.GONE);
                 showdialog(3, getResources().getString(R.string.download_error_title), result);
             } else {
-
-
-                //final ProgressDialog progressDialog;
-
                 try {
 
                     if (status.equals("finished")) { //New check..check if status equals finished..
@@ -416,11 +440,11 @@ public class MainActivity extends ActionBarActivity {
                         mp3_butt.setClickable(true);
                     } else { //not yet? Something went fuckin wrong :(
 
-                        status_box.setText(getResources().getString(R.string.status_error));
-                        status_box.setTextColor(Color.RED);
+                        if (mProgressDialog.isShowing()) { //If showing hide it
+                            mProgressDialog.dismiss(); //Dismiss ProgressDialog
+                        }
 
-                        //Set title
-                        title_box.setText(getResources().getString(R.string.status_title_error));
+                        showdialog(3, getResources().getString(R.string.download_error_title), result);
 
                         //Disable the MP3 button ;)
                         mp3_butt.setEnabled(false);
@@ -468,9 +492,6 @@ public class MainActivity extends ActionBarActivity {
 
             }
             }
-
-        /* ONPOSTEXECUTE END!! */
-
     }
 
 
@@ -524,8 +545,8 @@ public class MainActivity extends ActionBarActivity {
                     //Save video in sdcard
                     //output = new FileOutputStream(Environment.getExternalStorageDirectory() + "/" + videoid +".mp4");
                     //Save video in the Download folder
-                    if (savemode==true) { //Check Save Pref.
-                        output = new FileOutputStream(savedir + "/" + title +".mp3");
+                    if (savemode) { //Check Save Pref.
+                        output = new FileOutputStream(savedir + "/" + title);
                     } else {
                         output = new FileOutputStream(savedir + "/" + videoid +".mp3");
                     }
@@ -578,7 +599,7 @@ public class MainActivity extends ActionBarActivity {
             if (result != null)
                 showdialog(3, getResources().getString(R.string.download_error_title), result);
             else
-                Toast.makeText(context, getResources().getString(R.string.download_completed), Toast.LENGTH_LONG).show();
+                Toast.makeText(context, getResources().getString(R.string.download_completed) + " " + savedir, Toast.LENGTH_LONG).show();
         }
     }
 }

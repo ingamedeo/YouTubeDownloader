@@ -14,7 +14,7 @@
             android:summary="@string/pref_savedir_summary"
             android:dialogMessage="@string/pref_savedir_warn"
             android:key="prefSavedir"/>
-        <CheckBoxPreference
+        <SwitchPreference
             android:key="prefAutoupdate"
             android:title="@string/autoupdatepref_title"
             android:defaultValue="true"

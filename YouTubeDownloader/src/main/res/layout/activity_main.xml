@@ -2,52 +2,66 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:background="@drawable/back"
+    android:layout_marginLeft="20dp"
+    android:layout_marginRight="20dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/title_def"
-        android:id="@+id/title"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="44dp"/>
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/title_def"
+            android:id="@+id/title"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="50dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:gravity="center"
+            android:textSize="22sp"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="@string/status_def"
-        android:id="@+id/status"
-        android:layout_marginTop="37dp"
-        android:layout_below="@+id/title"
-        android:layout_centerHorizontal="true"/>
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textSize="8pt"
+            android:text="@string/status_def"
+            android:id="@+id/status"
+            android:layout_marginTop="30dp"
+            android:layout_below="@+id/title"
+            android:layout_centerHorizontal="true"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:gravity="center"/>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Download MP3"
-        android:id="@+id/downmp3"
-        android:clickable="false"
-        android:enabled="false"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="40dp"/>
+        <Button
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/downloadb_text"
+            android:id="@+id/downmp3"
+            android:clickable="false"
+            android:enabled="false"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/status"
+            android:layout_marginTop="30dp"
+            android:padding="15dp"
+            android:background="@drawable/button_selector"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="@string/downloadsize_def"
-        android:id="@+id/downloadsize"
-        android:layout_below="@+id/downmp3"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp"/>
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@string/downloadsize_def"
+            android:id="@+id/downloadsize"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="20dp"
+            android:layout_below="@+id/downmp3"
+            android:gravity="center"/>
 
-    <ProgressBar
-        android:id="@+id/progressBar1"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"/>
+        <ProgressBar
+            android:id="@+id/progressBar1"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"/>
 </RelativeLayout>
