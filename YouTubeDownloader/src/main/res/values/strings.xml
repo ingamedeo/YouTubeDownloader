@@ -29,7 +29,7 @@
     <string name="setting_low_api_error">Not supported on your device.</string>
     <string name="converting_title">Converting</string>
     <string name="converting_message">Converting your MP3… (this may take some time)</string>
-    <string name="donatemessage">If you want to support YouTube Downloader please donate to ingamedeo@gmail.com - PayPal</string>
+    <string name="donate_message2">If you want to support YouTube Downloader donate to ingamedeo@gmail.com - PayPal</string>
     <string name="prefsavedir_title">Change Destination Directory</string>
     <string name="pref_savedir_summary">Set directory where MP3s are saved.</string>
     <string name="pref_savedir_warn">WARNING: Make sure to type it correctly, otherwise download may fail.</string>
@@ -41,5 +41,6 @@
     <string name="use_3g">It\'s okay, use 3G</string>
     <string name="turnon_wifi">Turn on Wi-Fi</string>
     <string name="downloadb_text">Download MP3</string>
+    <string name="donate_message">This is Open-Source software. You can find my source code here: https://github.com/ingamedeo/YouTubeDownloader</string>
 
 </resources>

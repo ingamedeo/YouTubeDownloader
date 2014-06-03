@@ -5,7 +5,8 @@
     android:layout_height="match_parent"
     android:background="@drawable/back"
     android:layout_marginLeft="20dp"
-    android:layout_marginRight="20dp">
+    android:layout_marginRight="20dp"
+    android:gravity="center_horizontal">
 
         <TextView
             android:layout_width="fill_parent"
@@ -23,7 +24,7 @@
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:textSize="8pt"
+            android:textSize="18sp"
             android:text="@string/status_def"
             android:id="@+id/status"
             android:layout_marginTop="30dp"

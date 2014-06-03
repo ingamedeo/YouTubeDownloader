@@ -47,14 +47,15 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-//Version: 2.1
+//Version: 3.0_dev - TO DO
 
 /*
   videoid is NULL >.DONE.<
-  Donate screen
+  DonateActivity screen
   SwitchPreference >.DONE.<
+  Orientation fixed
 
-  AUTOUPDATE
+  AUTOUPDATE Not yet
 
   Load Data when come back from settings >.DONE.<
 
@@ -169,14 +170,17 @@ public class MainActivity extends ActionBarActivity {
 
         switch (item.getItemId()) {
             case R.id.action_settings:
-                    Intent i = new Intent(getBaseContext(), MenuActivity.class);
+                    Intent i = new Intent(getApplicationContext(), MenuActivity.class);
                     startActivityForResult(i, RESULT_SETTINGS);
+                overridePendingTransition(R.anim.slid_in, R.anim.slid_out);
                 return true;
             case R.id.exit:
                 finish();
                 return true;
             case R.id.donate:
-                //getResources().getString(R.string.donatemessage)
+                Intent d = new Intent(getApplicationContext(), DonateActivity.class);
+                startActivityForResult(d, 0); //Using startActivityForResult() to run animation when you come back to this activity
+                overridePendingTransition(R.anim.slid_in, R.anim.slid_out);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -185,6 +189,8 @@ public class MainActivity extends ActionBarActivity {
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) { //When you update the settings in menu, this updates them in the app.
         super.onActivityResult(requestCode, resultCode, data);
+
+        overridePendingTransition(R.anim.slid_in, R.anim.slid_out);
 
         switch (requestCode) {
             case RESULT_SETTINGS:
@@ -281,6 +287,7 @@ public class MainActivity extends ActionBarActivity {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         startActivityForResult(new Intent(Settings.ACTION_WIFI_SETTINGS), RESULT_WIFI); //Open Wi-Fi Settings
+                        overridePendingTransition(R.anim.slid_in, R.anim.slid_out);
                     }
                 });
                 break;
