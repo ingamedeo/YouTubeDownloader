@@ -13,7 +13,3 @@ YouTube Downloader
 ##### By ingamedeo. ingamedeo[at]gmail[dot]com. Contact me if you need any information.
 
 http://ingamedeo-ca.no-ip.org/
-
-<div style="display: inline-block;">
-<img src="http://i.imgur.com/cELMVLd.png"></img>
-</div>
