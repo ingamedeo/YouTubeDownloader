@@ -6,7 +6,9 @@
     android:background="@drawable/back"
     android:layout_marginLeft="20dp"
     android:layout_marginRight="20dp"
-    android:gravity="center_horizontal">
+    android:gravity="center_horizontal"
+    android:layout_marginTop="-2dip"
+    android:layout_marginBottom="-2dip">
 
         <TextView
             android:layout_width="fill_parent"
