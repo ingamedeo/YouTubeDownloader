@@ -63,6 +63,7 @@ import java.util.HashMap;
 
 public class MainActivity extends ActionBarActivity {
 
+    public static final String TAG = "yt_log";
     private static final int RESULT_SETTINGS = 1;
     private static final int RESULT_WIFI = 2;
     private SharedPreferences sharedPrefs;
@@ -222,17 +223,18 @@ public class MainActivity extends ActionBarActivity {
         // Get preferences. Inizialization.
         sharedPrefs = PreferenceManager // Create a Preferences Object. This is used to retrive preferences from menu.
                 .getDefaultSharedPreferences(this);
-        savemode = sharedPrefs.getBoolean("prefSavename", false);
-        Log.i("log_tag", "Save Pref looks like is: " + savemode);
+        savemode = sharedPrefs.getBoolean("prefSavename", true);
+        Log.i(TAG, "Save Pref looks like is: " + savemode);
         savedir = sharedPrefs.getString("prefSavedir", "");
         if (savedir.isEmpty()) { //If empty set SD Card as default ;)
             SharedPreferences.Editor editor = sharedPrefs.edit();
             editor.putString("prefSavedir", String.valueOf(Environment.getExternalStorageDirectory()));
             editor.commit();
+            savedir = sharedPrefs.getString("prefSavedir", "");
         }
-        Log.i("log_tag", "SaveDir Pref looks like: " + savedir);
+        Log.i(TAG, "SaveDir Pref looks like: " + savedir);
         autoupdate = sharedPrefs.getBoolean("prefAutoupdate", true);
-        Log.i("log_tag", "AutoUpdate looks like is: " + autoupdate);
+        Log.i(TAG, "AutoUpdate looks like is: " + autoupdate);
     }
 
     /* Check Internet Connection and Start processing */
@@ -342,10 +344,10 @@ public class MainActivity extends ActionBarActivity {
                         "http://www.vidtomp3.com/cc/conversioncloud.php",  // vidtomp3 remove server api
                         postParameters);
 
-                Log.i("log_tag", "API Response: " + response_mp3);
+                Log.i(TAG, "API Response: " + response_mp3);
                 returnString = response_mp3.substring(response_mp3.indexOf("statusurl")+12, response_mp3.length()-4); //Returns the statusurl
                 returnString = returnString.replace("\\", ""); //This removes backslashes from the url ;))
-                Log.i("log_tag", "1st: " + returnString); //Logs statusurl returned by the api
+                Log.i(TAG, "1st: " + returnString); //Logs statusurl returned by the api
 
                 // Connects to statusurl..should get an XML document..anyway..I'm not parsing it ;)
                 final DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -353,7 +355,7 @@ public class MainActivity extends ActionBarActivity {
                 HttpGet httpGet = new HttpGet(returnString);
 
                 while (!status.equals("finished") && !cancelled) { //Repeat until status is finished
-                    Log.i("log_tag", "Looping right now!");
+                    Log.i(TAG, "Looping right now!");
 
                     //Set timeout ;)
                     final HttpParams httpParameters = httpClient.getParams();
@@ -374,7 +376,7 @@ public class MainActivity extends ActionBarActivity {
                             videoid = data.get("videoid");
                             title = data.get("file");
                             mp3url = data.get("downloadurl");
-                            Log.i("log_tag","2nd: " + mp3url); //This should return mp3 download url ;)
+                            Log.i(TAG,"2nd: " + mp3url); //This should return mp3 download url ;)
                             downloadsize = data.get("filesize");
                             if (mProgressDialog.isShowing()) { //If showing hide it
                                 mProgressDialog.dismiss(); //Dismiss ProgressDialog
@@ -490,7 +492,7 @@ public class MainActivity extends ActionBarActivity {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Log.e("log_tag","Error in OnPostExecute :((((");
+                    Log.e(TAG,"Error in OnPostExecute :((((");
                     spinner.setVisibility(View.GONE);
                     showdialog(3, getResources().getString(R.string.download_error_title), result);
 

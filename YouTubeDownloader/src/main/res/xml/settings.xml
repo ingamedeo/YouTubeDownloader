@@ -4,7 +4,7 @@
 
     <PreferenceCategory android:title="@string/pref_settings_category" >
         <CheckBoxPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="prefSavename"
             android:summary="@string/pref_settings_summary"
             android:title="@string/pref_settings_title" >
