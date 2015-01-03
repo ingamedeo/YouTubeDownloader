@@ -1,6 +1,5 @@
 package com.ingamedeo.youtubedownloader;
 
-import android.util.Log;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -11,18 +10,16 @@ import java.io.InputStream;
 import java.util.HashMap;
 
 /**
- *
  * >> vidtomp3 Parser <<
- *
+ * <p/>
  * Written by: Amedeo Arch <ingamedeo> --- 01/06/14.
  * License: http://creativecommons.org/licenses/by-nc-sa/4.0/
- *
  */
 public class Vidtomp3parser {
 
     private static final String ns = null; //Don't use namespaces
 
-    public HashMap<String, String> parse(InputStream in)  throws XmlPullParserException, IOException {
+    public HashMap<String, String> parse(InputStream in) throws XmlPullParserException, IOException {
 
         try {
             XmlPullParser parser = Xml.newPullParser();
@@ -40,9 +37,9 @@ public class Vidtomp3parser {
         HashMap<String, String> data = new HashMap<String, String>();
 
         String status = null;
-        String videoid  = null;
-        String file  = null;
-        String downloadurl  = null;
+        String videoid = null;
+        String file = null;
+        String downloadurl = null;
         String filesize = null;
 
         parser.require(XmlPullParser.START_TAG, ns, "conversioncloud");
@@ -61,12 +58,9 @@ public class Vidtomp3parser {
 
             } else if (name.equals("downloadurl")) {
                 downloadurl = readTag(parser, "downloadurl");
-            }
-
-            else if (name.equals("filesize")) {
+            } else if (name.equals("filesize")) {
                 filesize = readTag(parser, "filesize");
-            }
-            else {
+            } else {
                 skip(parser);
             }
         }

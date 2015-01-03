@@ -23,6 +23,7 @@ public class MenuActivity extends PreferenceActivity {
         //Legacy Preferences
         addPreferencesFromResource(R.xml.settings);
     }
+
     public boolean onOptionsItemSelected(MenuItem item) { //Action Bar
         switch (item.getItemId()) {
             case android.R.id.home:

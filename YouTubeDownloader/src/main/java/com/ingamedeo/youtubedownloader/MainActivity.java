@@ -99,7 +99,7 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         //Setting up spinner
-        spinner = (ProgressBar)findViewById(R.id.progressBar1);
+        spinner = (ProgressBar) findViewById(R.id.progressBar1);
         spinner.setVisibility(View.GONE);
 
         //Set up UI Components
@@ -108,7 +108,7 @@ public class MainActivity extends ActionBarActivity {
         downloadsize_box = (TextView) findViewById(R.id.downloadsize);
         mp3_butt = (Button) findViewById(R.id.downmp3);
 
-        oldColors =  status_box.getTextColors(); //Save default color
+        oldColors = status_box.getTextColors(); //Save default color
 
         Typeface font_title = Typeface.createFromAsset(c.getAssets(), "fonts/JosefinSlab-Bold.ttf");
         title_box.setTypeface(font_title);
@@ -160,19 +160,18 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
+    public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
             case R.id.action_settings:
-                    Intent i = new Intent(getApplicationContext(), MenuActivity.class);
-                    startActivityForResult(i, RESULT_SETTINGS);
+                Intent i = new Intent(getApplicationContext(), MenuActivity.class);
+                startActivityForResult(i, RESULT_SETTINGS);
                 overridePendingTransition(R.anim.slid_in, R.anim.slid_out);
                 return true;
             case R.id.exit:
@@ -212,7 +211,7 @@ public class MainActivity extends ActionBarActivity {
         return false;
     }
 
-    public boolean isConnectedWifi(){
+    public boolean isConnectedWifi() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = cm.getActiveNetworkInfo();
         return (info != null && info.isConnected() && info.getType() == ConnectivityManager.TYPE_WIFI);
@@ -303,7 +302,7 @@ public class MainActivity extends ActionBarActivity {
                 });
                 break;
             case 3:
-                if (message==null || message.isEmpty()) { //If result is null, show a default error message
+                if (message == null || message.isEmpty()) { //If result is null, show a default error message
                     alert.setMessage(getResources().getString(R.string.download_error_message));
                 }
                 status_box.setText(getResources().getString(R.string.status_error));
@@ -324,6 +323,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     boolean cancelled = false;
+
     private class DownloadWebPageTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... urls) {
@@ -345,7 +345,7 @@ public class MainActivity extends ActionBarActivity {
                         postParameters);
 
                 Log.i(TAG, "API Response: " + response_mp3);
-                returnString = response_mp3.substring(response_mp3.indexOf("statusurl")+12, response_mp3.length()-4); //Returns the statusurl
+                returnString = response_mp3.substring(response_mp3.indexOf("statusurl") + 12, response_mp3.length() - 4); //Returns the statusurl
                 returnString = returnString.replace("\\", ""); //This removes backslashes from the url ;))
                 Log.i(TAG, "1st: " + returnString); //Logs statusurl returned by the api
 
@@ -367,7 +367,7 @@ public class MainActivity extends ActionBarActivity {
                     HttpEntity httpEntity = httpResponse.getEntity();
 
                     HashMap<String, String> data;
-                    if (httpEntity!=null) {
+                    if (httpEntity != null) {
                         InputStream instream = httpEntity.getContent();
                         Vidtomp3parser parser = new Vidtomp3parser();
                         data = parser.parse(instream);
@@ -376,7 +376,7 @@ public class MainActivity extends ActionBarActivity {
                             videoid = data.get("videoid");
                             title = data.get("file");
                             mp3url = data.get("downloadurl");
-                            Log.i(TAG,"2nd: " + mp3url); //This should return mp3 download url ;)
+                            Log.i(TAG, "2nd: " + mp3url); //This should return mp3 download url ;)
                             downloadsize = data.get("filesize");
                             if (mProgressDialog.isShowing()) { //If showing hide it
                                 mProgressDialog.dismiss(); //Dismiss ProgressDialog
@@ -428,7 +428,7 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected void onPostExecute(String result) { //When I have everything done...
 
-            if (result!=null) {
+            if (result != null) {
                 spinner.setVisibility(View.GONE);
                 showdialog(3, getResources().getString(R.string.download_error_title), result);
             } else {
@@ -492,7 +492,7 @@ public class MainActivity extends ActionBarActivity {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Log.e(TAG,"Error in OnPostExecute :((((");
+                    Log.e(TAG, "Error in OnPostExecute :((((");
                     spinner.setVisibility(View.GONE);
                     showdialog(3, getResources().getString(R.string.download_error_title), result);
 
@@ -500,7 +500,7 @@ public class MainActivity extends ActionBarActivity {
 
 
             }
-            }
+        }
     }
 
 
@@ -557,7 +557,7 @@ public class MainActivity extends ActionBarActivity {
                     if (savemode) { //Check Save Pref.
                         output = new FileOutputStream(savedir + "/" + title);
                     } else {
-                        output = new FileOutputStream(savedir + "/" + videoid +".mp3");
+                        output = new FileOutputStream(savedir + "/" + videoid + ".mp3");
                     }
 
                     byte data[] = new byte[4096];
@@ -581,8 +581,8 @@ public class MainActivity extends ActionBarActivity {
                             output.close();
                         if (input != null)
                             input.close();
+                    } catch (IOException ignored) {
                     }
-                    catch (IOException ignored) { }
 
                     if (connection != null)
                         connection.disconnect();

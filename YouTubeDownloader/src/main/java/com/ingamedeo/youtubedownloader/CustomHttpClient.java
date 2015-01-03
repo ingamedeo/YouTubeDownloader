@@ -1,11 +1,7 @@
 package com.ingamedeo.youtubedownloader;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.util.ArrayList;
- 
+import android.util.Log;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -16,187 +12,185 @@ import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
- 
-import android.util.Log;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.util.ArrayList;
 
 public class CustomHttpClient {
 
- /** The time it takes for our client to timeout */
-	public static final int HTTP_TIMEOUT = 30 * 1000; // milliseconds 
- /** Single instance of our HttpClient */
-	private static HttpClient mHttpClient; 
- /**
-  * Get our single instance of our HttpClient object.
-  * 
-  * @return an HttpClient object with connection parameters set
-  */
+    /**
+     * The time it takes for our client to timeout
+     */
+    public static final int HTTP_TIMEOUT = 30 * 1000; // milliseconds
+    /**
+     * Single instance of our HttpClient
+     */
+    private static HttpClient mHttpClient;
 
- private static HttpClient getHttpClient() {
+    /**
+     * Get our single instance of our HttpClient object.
+     *
+     * @return an HttpClient object with connection parameters set
+     */
 
-  if (mHttpClient == null) {
-   mHttpClient = new DefaultHttpClient();
-   
-   final HttpParams params = mHttpClient.getParams();
-   HttpConnectionParams.setConnectionTimeout(params, HTTP_TIMEOUT);
-   HttpConnectionParams.setSoTimeout(params, HTTP_TIMEOUT);
-   ConnManagerParams.setTimeout(params, HTTP_TIMEOUT);
-  }
+    private static HttpClient getHttpClient() {
 
-  return mHttpClient;
- }
- 
- /**
-  * Performs an HTTP Post request to the specified url with the specified
-  * parameters.
-  * 
-  * @param url
-  *            The web address to post the request to
-  * @param postParameters
-  *            The parameters to send via the request
-  * @return The result of the request
-  * @throws Exception
-  */
+        if (mHttpClient == null) {
+            mHttpClient = new DefaultHttpClient();
 
- 	public static String executeHttpPost(String url,ArrayList<NameValuePair> postParameters) throws Exception {
+            final HttpParams params = mHttpClient.getParams();
+            HttpConnectionParams.setConnectionTimeout(params, HTTP_TIMEOUT);
+            HttpConnectionParams.setSoTimeout(params, HTTP_TIMEOUT);
+            ConnManagerParams.setTimeout(params, HTTP_TIMEOUT);
+        }
 
- 		BufferedReader in = null;
+        return mHttpClient;
+    }
 
-	  try {
-	
-	   HttpClient client = getHttpClient();
-	
-	   HttpPost request = new HttpPost(url);
-	
-	   UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(
-	
-	     postParameters);
-	
-	   request.setEntity(formEntity);
-	
-	   HttpResponse response = client.execute(request);
-	
-	   in = new BufferedReader(new InputStreamReader(response.getEntity()
-	
-	     .getContent()));
-	
-	   
-	
-	   StringBuffer sb = new StringBuffer("");
-	
-	   String line = "";
-	
-	   String NL = System.getProperty("line.separator");
-	
-	   while ((line = in.readLine()) != null) {
-	
-	    sb.append(line + NL);
-	
-	   }
-	
-	   in.close();
-	
-	 
-	   String result = sb.toString();
-	
-	   return result;
-	
-	  } finally {
+    /**
+     * Performs an HTTP Post request to the specified url with the specified
+     * parameters.
+     *
+     * @param url            The web address to post the request to
+     * @param postParameters The parameters to send via the request
+     * @return The result of the request
+     * @throws Exception
+     */
 
-   if (in != null) {
+    public static String executeHttpPost(String url, ArrayList<NameValuePair> postParameters) throws Exception {
 
-    try {
+        BufferedReader in = null;
 
-     in.close();
+        try {
 
-    } catch (IOException e) {
+            HttpClient client = getHttpClient();
 
-     Log.e("log_tag", "Error converting result "+e.toString()); 
+            HttpPost request = new HttpPost(url);
 
-     e.printStackTrace();
+            UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(
+
+                    postParameters);
+
+            request.setEntity(formEntity);
+
+            HttpResponse response = client.execute(request);
+
+            in = new BufferedReader(new InputStreamReader(response.getEntity()
+
+                    .getContent()));
+
+
+            StringBuffer sb = new StringBuffer("");
+
+            String line = "";
+
+            String NL = System.getProperty("line.separator");
+
+            while ((line = in.readLine()) != null) {
+
+                sb.append(line + NL);
+
+            }
+
+            in.close();
+
+
+            String result = sb.toString();
+
+            return result;
+
+        } finally {
+
+            if (in != null) {
+
+                try {
+
+                    in.close();
+
+                } catch (IOException e) {
+
+                    Log.e("log_tag", "Error converting result " + e.toString());
+
+                    e.printStackTrace();
+
+                }
+
+            }
+
+        }
 
     }
 
-   }
 
-  }
+    /**
+     * Performs an HTTP GET request to the specified url.
+     *
+     * @param url The web address to post the request to
+     * @return The result of the request
+     * @throws Exception
+     */
 
- }
+    public static String executeHttpGet(String url) throws Exception {
 
- 
- /**
+        BufferedReader in = null;
 
-  * Performs an HTTP GET request to the specified url.
+        try {
 
-  * 
+            HttpClient client = getHttpClient();
 
-  * @param url
+            HttpGet request = new HttpGet();
 
-  *            The web address to post the request to
+            request.setURI(new URI(url));
 
-  * @return The result of the request
+            HttpResponse response = client.execute(request);
 
-  * @throws Exception
+            in = new BufferedReader(new InputStreamReader(response.getEntity()
 
-  */
+                    .getContent()));
 
- public static String executeHttpGet(String url) throws Exception {
 
-  BufferedReader in = null;
+            StringBuffer sb = new StringBuffer("");
 
-  try {
+            String line = "";
 
-   HttpClient client = getHttpClient();
+            String NL = System.getProperty("line.separator");
 
-   HttpGet request = new HttpGet();
+            while ((line = in.readLine()) != null) {
 
-   request.setURI(new URI(url));
+                sb.append(line + NL);
 
-   HttpResponse response = client.execute(request);
+            }
 
-   in = new BufferedReader(new InputStreamReader(response.getEntity()
+            in.close();
 
-     .getContent()));
 
- 
-   StringBuffer sb = new StringBuffer("");
+            String result = sb.toString();
 
-   String line = "";
+            return result;
 
-   String NL = System.getProperty("line.separator");
+        } finally {
 
-   while ((line = in.readLine()) != null) {
+            if (in != null) {
 
-    sb.append(line + NL);
+                try {
 
-   }
+                    in.close();
 
-   in.close();
+                } catch (IOException e) {
 
- 
-   String result = sb.toString();
+                    Log.e("log_tag", "Error converting result " + e.toString());
 
-   return result;
+                    e.printStackTrace();
 
-  } finally {
+                }
 
-   if (in != null) {
+            }
 
-    try {
-
-     in.close();
-
-    } catch (IOException e) {
-
-     Log.e("log_tag", "Error converting result "+e.toString()); 
-
-     e.printStackTrace();
+        }
 
     }
-
-   }
-
-  }
-
- }
 
 }

@@ -1,9 +1,8 @@
 package com.ingamedeo.youtubedownloader;
 
 import android.content.Context;
-import android.graphics.Typeface;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 import android.widget.TextView;
 
